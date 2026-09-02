@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NextGen Liquid Glass</title>
+    <!-- SF Pro Display Font with Cyrillic and Latin support -->
+    <link rel="stylesheet" href="https://fonts.cdnfonts.com/css/sf-pro-display">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Background Audio Element -->
+    <audio id="bgAudio" src="assets/чечня.mp3" preload="auto"></audio>
+
+    <div class="app-container" id="appContainer">
+        <!-- Top Header Navigation -->
+        <header class="top-header">
+            <!-- Left Avatar with Audio Trigger -->
+            <div class="avatar-container">
+                <button class="avatar-btn" id="avatarBtn" aria-label="Включить музыку">
+                    <img src="assets/avatar.png" alt="Avatar" class="avatar-img">
+                </button>
+            </div>
+
+            <!-- Center Navigation Capsule (iOS Liquid Glass) -->
+            <nav class="nav-capsule">
+                <div class="nav-tabs" id="navTabsContainer">
+                    <div class="nav-indicator" id="navIndicator"></div>
+                    <button class="nav-tab active" data-tab="gdz">
+                        <span class="tab-text">ГДЗ</span>
+                    </button>
+                    <button class="nav-tab" data-tab="schedule">
+                        <span class="tab-text">РОЗКЛАД</span>
+                    </button>
+                    <button class="nav-tab" data-tab="calc">
+                        <span class="tab-text">КАЛЬКУЛЯТОР</span>
+                    </button>
+                    <button class="nav-tab" data-tab="ai">
+                        <span class="tab-text">ИИ</span>
+                    </button>
+                </div>
+
+                <div class="nav-divider"></div>
+
+                <div class="nav-timer">
+                    <span class="timer-label" id="timerLabel">до початку</span>
+                    <span class="timer-time"><span id="timerPrefix">уроку:</span> <span class="timer-badge" id="lessonTimer">--:--</span></span>
+                </div>
+            </nav>
+
+            <!-- Right Settings Button -->
+            <div class="settings-container">
+                <button class="settings-btn" id="settingsBtn" aria-label="Настройки">
+                    <svg class="gear-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3.2"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Hero Title with Optical Gaussian Blur Depth Reflection -->
+            <div class="hero-wrapper">
+                <h1 class="hero-title">Привет баран</h1>
+                <div class="hero-title-reflection" aria-hidden="true">Привет баран</div>
+            </div>
+
+            <!-- Dynamic Today / Tomorrow Schedule Section -->
+            <section class="schedule-section" id="scheduleSection">
+                <div class="section-divider">
+                    <div class="divider-line"></div>
+                    <div class="divider-text" id="scheduleSectionTitle">УРОКИ НА СЬОГОДНІ</div>
+                    <div class="divider-line"></div>
+                </div>
+
+                <div class="cards-grid schedule-cards-grid" id="scheduleCardsGrid">
+                    <!-- Populated dynamically based on 8-A schedule -->
+                </div>
+            </section>
+
+            <!-- All Subjects Section Divider -->
+            <div class="section-divider">
+                <div class="divider-line"></div>
+                <div class="divider-text">ВСІ ПРЕДМЕТИ (ГДЗ)</div>
+                <div class="divider-line"></div>
+            </div>
+
+            <!-- 12 Liquid Glass Subject Cards Grid -->
+            <div class="cards-grid">
+                <!-- 1. Алгебра -->
+                <button class="liquid-card" data-title="ГДЗ Алгебра">
+                    <div class="liquid-lens"></div>
+                    <div class="liquid-specular-edge"></div>
+                    <div class="card-cover-box">
+                        <img src="assets/books/algebra.jpg" class="card-cover-img" alt="ГДЗ Алгебра" />
+                    </div>
+                    <div class="card-content">
+                        <span class="card-title">ГДЗ Алгебра</span>
+                    </div>
+                </button>
+
+                <!-- 2. Біологія -->
+                <button class="liquid-card" data-title="ГДЗ Біологія">
+                    <div class="liquid-lens"></div>
+                    <div class="liquid-specular-edge"></div>
+                    <div class="card-cover-box">
+                        <img src="assets/books/biology.jpg" class="card-cover-img" alt="ГДЗ Біологія" />
+                    </div>
+                    <div class="card-content">
+                        <span class="card-title">ГДЗ Біологія</span>
+                    </div>
+                </button>
+
+                <!-- 3. Всесвітня історія -->
+                <button class="liquid-card" data-title="ГДЗ Всесвітня історія">
+                    <div class="liquid-lens"></div>
+                    <div class="liquid-specular-edge"></div>
+                    <div class="card-cover-box">
+                        <img src="assets/books/world_history.jpg" class="card-cover-img" alt="ГДЗ Всесвітня історія" />
+                    </div>
+                    <div class="card-content">
+                        <span class="card-title">ГДЗ Всесвітня історія</span>
+                    </div>
+                </button>
+
+                <!-- 4. Географія -->
+                <button class="liquid-card" data-title="ГДЗ Географія">
+                    <div class="liquid-lens"></div>
+                    <div class="liquid-specular-edge"></div>
+                    <div class="card-cover-box">
+                        <img src="assets/books/geography.jpg" class="card-cover-img" alt="ГДЗ Географія" />
+                    </div>
+                    <div class="card-content">
+                        <span class="card-title">ГДЗ Географія</span>
+                    </div>
+                </button>
+
+                <!-- 5. Геометрія -->
+                <button class="liquid-card" data-title="ГДЗ Геометрія">
+                    <div class="liquid-lens"></div>
+                    <div class="liquid-specular-edge"></div>
+                    <div class="card-cover-box">
+                        <img src="assets/books/geometry.jpg" class="card-cover-img" alt="ГДЗ Геометрія" />
+                    </div>
+                    <div class="card-content">
+                        <span class="card-title">ГДЗ Геометрія</span>
+                    </div>
+                </button>
+
+                <!-- 6. Громадянська освіта -->
+                <button class="liquid-card" data-title="ГДЗ Громадянська освіта">
+                    <div class="liquid-lens"></div>
+                    <div class="liquid-specular-edge"></div>
+                    <div class="card-cover-box">
+                        <img src="assets/books/civics.jpg" class="card-cover-img" alt="ГДЗ Громадянська освіта" />
+                    </div>
+                    <div class="card-content">
+                        <span class="card-title">ГДЗ Громадянська освіта</span>
+                    </div>
+                </button>
+
+                <!-- 7. Здоров'я, безпека та добробут -->
+                <button class="liquid-card" data-title="ГДЗ Здоров'я, безпека та добробут">
+                    <div class="liquid-lens"></div>
+                    <div class="liquid-specular-edge"></div>
+                    <div class="card-cover-box">
+                        <img src="assets/books/health.jpg" class="card-cover-img" alt="ГДЗ Здоров'я, безпека та добробут" />
+                    </div>
+                    <div class="card-content">
+                        <span class="card-title">ГДЗ Здоров'я, безпека та добробут</span>
+                    </div>
+                </button>
+
+                <!-- 8. Історія України -->
+                <button class="liquid-card" data-title="ГДЗ Історія України">
+                    <div class="liquid-lens"></div>
+                    <div class="liquid-specular-edge"></div>
+                    <div class="card-cover-box">
+                        <img src="assets/books/ukr_history.jpg" class="card-cover-img" alt="ГДЗ Історія України" />
+                    </div>
+                    <div class="card-content">
+                        <span class="card-title">ГДЗ Історія України</span>
+                    </div>
+                </button>
+
+                <!-- 9. Підприємництво і фінансова грамотність -->
+                <button class="liquid-card" data-title="ГДЗ Підприємництво і фінансова грамотність">
+                    <div class="liquid-lens"></div>
+                    <div class="liquid-specular-edge"></div>
+                    <div class="card-cover-box">
+                        <img src="assets/books/entrepreneurship.jpg" class="card-cover-img" alt="ГДЗ Підприємництво і фінансова грамотність" />
+                    </div>
+                    <div class="card-content">
+                        <span class="card-title">ГДЗ Підприємництво і фінансова грамотність</span>
+                    </div>
+                </button>
+
+                <!-- 10. Українська мова -->
+                <button class="liquid-card" data-title="ГДЗ Українська мова">
+                    <div class="liquid-lens"></div>
+                    <div class="liquid-specular-edge"></div>
+                    <div class="card-cover-box">
+                        <img src="assets/books/ukr_mova.jpg" class="card-cover-img" alt="ГДЗ Українська мова" />
+                    </div>
+                    <div class="card-content">
+                        <span class="card-title">ГДЗ Українська мова</span>
+                    </div>
+                </button>
+
+                <!-- 11. Фізика -->
+                <button class="liquid-card" data-title="ГДЗ Фізика">
+                    <div class="liquid-lens"></div>
+                    <div class="liquid-specular-edge"></div>
+                    <div class="card-cover-box">
+                        <img src="assets/books/physics.jpg" class="card-cover-img" alt="ГДЗ Фізика" />
+                    </div>
+                    <div class="card-content">
+                        <span class="card-title">ГДЗ Фізика</span>
+                    </div>
+                </button>
+
+                <!-- 12. Хімія -->
+                <button class="liquid-card" data-title="ГДЗ Хімія">
+                    <div class="liquid-lens"></div>
+                    <div class="liquid-specular-edge"></div>
+                    <div class="card-cover-box">
+                        <img src="assets/books/chemistry.jpg" class="card-cover-img" alt="ГДЗ Хімія" />
+                    </div>
+                    <div class="card-content">
+                        <span class="card-title">ГДЗ Хімія</span>
+                    </div>
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <!-- iOS Translucent Liquid Glass Modal Window -->
+    <div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">
+        <div class="modal-container" id="modalContainer" role="dialog" aria-modal="true">
+            <!-- iOS Launch Screen Crossfade View matching Card Twin -->
+            <div class="modal-launch-view" id="modalLaunchView" aria-hidden="true">
+                <div class="liquid-lens"></div>
+                <div class="liquid-specular-edge"></div>
+                <div class="card-cover-box" id="modalLaunchCoverBox" style="display: none;">
+                    <img src="" class="card-cover-img" id="modalLaunchCoverImg" alt="" />
+                </div>
+                <div class="card-content">
+                    <span class="card-title" id="modalLaunchTitle">ГДЗ</span>
+                </div>
+            </div>
+
+            <!-- Glass Close Button -->
+            <button class="modal-close-btn" id="modalCloseBtn" aria-label="Закрыть">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+
+            <div class="modal-content-wrapper">
+                <!-- Left Option Buttons Column -->
+                <div class="modal-options-column">
+                    <!-- Dynamic GDZ Provider Buttons -->
+                    <div class="modal-gdz-list" id="modalGdzList">
+                        <!-- Populated dynamically per subject -->
+                    </div>
+
+                    <!-- Book / Textbook Link Button in the exact red box zone -->
+                    <a href="#" target="_blank" rel="noopener" class="modal-book-link-btn" id="modalBookLinkBtn">
+                        <svg class="book-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                        </svg>
+                        <span class="book-link-text">ПІДРУЧНИК ОНЛАЙН</span>
+                        <svg class="external-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                            <polyline points="15 3 21 3 21 9"></polyline>
+                            <line x1="10" y1="14" x2="21" y2="3"></line>
+                        </svg>
+                    </a>
+                </div>
+
+                <!-- Right subject and book preview -->
+                <div class="modal-preview-column">
+                    <a href="#" target="_blank" rel="noopener" class="book-preview-card" id="modalBookPreviewLink" title="Натисніть, щоб відкрити підручник">
+                        <div class="book-preview-inner-space" id="modalBookInnerSpace">
+                            <img class="book-preview-cover" id="modalBookCoverImg" src="" alt="Обкладинка підручника" />
+                            <div class="book-preview-placeholder" id="modalBookPlaceholder">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="book-preview-label">
+                            <span class="book-label-text">ГДЗ &ldquo;<span id="modalSubjectName">НАЗВАНИЕ ПРЕДМЕТА</span>&rdquo;</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Column Calculator Modal -->
+    <div class="calc-modal-backdrop" id="calcModalBackdrop" aria-hidden="true">
+        <div class="calc-modal-container" id="calcModalContainer" role="dialog" aria-modal="true">
+            <div class="calc-modal-header">
+                <div class="calc-title">Калькулятор в стовпчик</div>
+                <button class="calc-modal-close" id="calcModalCloseBtn" aria-label="Закрити">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="calc-body">
+                <!-- Operation selector -->
+                <div class="calc-op-selector">
+                    <button class="calc-op-btn active" data-op="+" id="calcOpAdd">+</button>
+                    <button class="calc-op-btn" data-op="-" id="calcOpSub">−</button>
+                    <button class="calc-op-btn" data-op="*" id="calcOpMul">×</button>
+                    <button class="calc-op-btn" data-op="/" id="calcOpDiv">÷</button>
+                </div>
+
+                <!-- Input fields -->
+                <div class="calc-inputs">
+                    <input type="text" class="calc-input" id="calcNum1" placeholder="Перше число" inputmode="decimal" autocomplete="off" />
+                    <input type="text" class="calc-input" id="calcNum2" placeholder="Друге число" inputmode="decimal" autocomplete="off" />
+                </div>
+
+                <button class="calc-solve-btn" id="calcSolveBtn">Обчислити</button>
+
+                <!-- Result area -->
+                <div class="calc-result-area" id="calcResultArea"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schedule Viewer Modal -->
+    <div class="schedule-modal-backdrop" id="scheduleModalBackdrop" aria-hidden="true">
+        <div class="schedule-modal-container" id="scheduleModalContainer" role="dialog" aria-modal="true">
+            <!-- Modal Header with segmented control and close button -->
+            <div class="schedule-modal-header">
+                <div class="schedule-segmented-control" role="tablist">
+                    <button class="seg-btn active" id="segBtnBells" data-view="bells" role="tab" aria-selected="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="seg-icon">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        <span>Час уроків та перерв</span>
+                    </button>
+                    <button class="seg-btn" id="segBtnLessons" data-view="lessons" role="tab" aria-selected="false">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="seg-icon">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                        </svg>
+                        <span>Які предмети</span>
+                    </button>
+                </div>
+                <button class="schedule-modal-close" id="scheduleModalCloseBtn" aria-label="Закрити">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Image Viewer Area -->
+            <div class="schedule-image-viewer" id="scheduleImageViewer">
+                <div class="schedule-img-wrap active" id="wrapBells">
+                    <img src="assets/schedule_bells.jpg" class="schedule-view-img" alt="Час уроків та перерв" draggable="false" />
+                </div>
+                <div class="schedule-img-wrap" id="wrapLessons">
+                    <img src="assets/schedule_lessons.jpg" class="schedule-view-img" alt="Розклад предметів 8-А" draggable="false" />
+                </div>
+                <div class="schedule-zoom-hint" id="scheduleZoomHint">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        <line x1="11" y1="8" x2="11" y2="14"></line>
+                        <line x1="8" y1="11" x2="14" y2="11"></line>
+                    </svg>
+                    <span>Затисніть на 0.5 сек для збільшення</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
