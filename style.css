@@ -670,16 +670,23 @@ body {
     pointer-events: none;
 }
 
-/* Scroll-locking ONLY for mobile touch devices when modal is active */
-@media (max-width: 768px), (pointer: coarse) {
-    html.modal-locked,
-    body.modal-locked {
-        overflow: hidden !important;
-        touch-action: none !important;
-        overscroll-behavior: none !important;
-        height: 100% !important;
-    }
+/* Performance optimizations active when perf-mode is toggled in Settings */
+body.perf-mode .app-container.modal-open,
+body.perf-mode .app-container.modal-open.modal-closing {
+    transform: none !important;
+}
 
+body.perf-mode .modal-backdrop::before {
+    backdrop-filter: blur(6px) brightness(0.7) !important;
+    -webkit-backdrop-filter: blur(6px) brightness(0.7) !important;
+    background: rgba(10, 10, 14, 0.65) !important;
+}
+
+body.perf-mode .liquid-lens {
+    display: none !important;
+}
+
+@media (max-width: 768px), (pointer: coarse) {
     .modal-backdrop.is-open {
         touch-action: none;
         overscroll-behavior: none;
@@ -1217,24 +1224,22 @@ a.book-preview-card:active {
     }
 
     .modal-container {
-        padding: 18px 14px 22px;
+        padding: 22px 18px 20px;
         min-height: auto;
-        max-height: 94vh;
-        overflow-y: auto;
-        overflow-x: hidden;
-        -webkit-overflow-scrolling: touch;
-        border-radius: 26px;
+        border-radius: 24px;
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: flex-start;
+        justify-content: center;
+        overflow: hidden;
     }
 
     .modal-close-btn {
         top: 12px;
         right: 12px;
-        width: 32px;
-        height: 32px;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
         z-index: 20;
     }
 
@@ -1242,11 +1247,12 @@ a.book-preview-card:active {
         flex-direction: column-reverse;
         gap: 12px;
         width: 100%;
-        max-width: 320px;
+        max-width: 290px;
         margin: 0 auto;
         display: flex;
         align-items: center;
-        padding-top: 4px;
+        justify-content: center;
+        padding-top: 0;
     }
 
     .modal-preview-column {
@@ -1258,8 +1264,8 @@ a.book-preview-card:active {
     }
 
     .book-preview-card {
-        width: auto;
-        max-width: 240px;
+        width: 100%;
+        max-width: 260px;
         height: auto;
         background: transparent !important;
         border: none !important;
@@ -1280,12 +1286,12 @@ a.book-preview-card:active {
     }
 
     .book-preview-inner-space {
-        width: 96px;
-        height: 138px;
+        width: 82px;
+        height: 114px;
         background: transparent !important;
         border: none !important;
         box-shadow: none !important;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
         padding: 0;
         border-radius: 8px;
         overflow: visible;
@@ -1300,23 +1306,23 @@ a.book-preview-card:active {
         object-fit: contain;
         border-radius: 8px;
         box-shadow: 
-            0 10px 24px -4px rgba(0, 0, 0, 0.75),
+            0 8px 20px -3px rgba(0, 0, 0, 0.75),
             0 2px 6px rgba(0, 0, 0, 0.35),
             0 0 0 1px rgba(255, 255, 255, 0.18);
         display: block;
     }
 
     .book-preview-placeholder {
-        width: 96px;
-        height: 138px;
+        width: 82px;
+        height: 114px;
         border-radius: 8px;
         background: rgba(255, 255, 255, 0.08);
         border: 1px solid rgba(255, 255, 255, 0.15);
-        box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 6px 18px -3px rgba(0, 0, 0, 0.5);
     }
 
     .book-preview-label {
-        font-size: 14px;
+        font-size: 13.5px;
         font-weight: 600;
         letter-spacing: 0.2px;
         color: var(--text-white);
@@ -1327,8 +1333,11 @@ a.book-preview-card:active {
 
     .modal-options-column {
         width: 100%;
-        max-width: 320px;
+        max-width: 290px;
         margin-top: 0;
+        min-height: auto !important;
+        height: auto !important;
+        justify-content: flex-start !important;
         gap: 8px;
         display: flex;
         flex-direction: column;
@@ -1345,27 +1354,17 @@ a.book-preview-card:active {
     .modal-option-btn,
     .modal-book-link-btn {
         width: 100%;
-        height: 44px;
-        min-height: 44px;
+        height: 42px;
+        min-height: 42px;
         border-radius: 13px;
-        font-size: 13.5px;
+        font-size: 13px;
         font-weight: 600;
         letter-spacing: 0.3px;
         display: flex;
         align-items: center;
         justify-content: center;
         padding: 0 14px;
-    }
-
-    .modal-home-bar-zone {
-        height: 22px;
-        padding-bottom: 4px;
-        margin-top: 6px;
-    }
-
-    .modal-home-bar {
-        width: 100px;
-        height: 4px;
+        margin-top: 0 !important;
     }
 }
 
@@ -1882,4 +1881,242 @@ a.book-preview-card:active {
         padding: 10px;
         max-height: calc(92vh - 65px);
     }
+}
+
+/* ==========================================================================
+   SETTINGS MODAL & CONTROLS
+   ========================================================================== */
+.settings-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.76);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    padding: 20px;
+}
+
+.settings-modal-backdrop.is-open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.settings-modal-container {
+    position: relative;
+    width: 100%;
+    max-width: 440px;
+    max-height: 88vh;
+    background: linear-gradient(180deg, rgba(38, 38, 44, 0.96) 0%, rgba(20, 20, 24, 0.98) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 26px;
+    box-shadow:
+        0 24px 70px rgba(0, 0, 0, 0.85),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: scale(0.94) translateY(12px);
+    transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.settings-modal-backdrop.is-open .settings-modal-container {
+    transform: scale(1) translateY(0);
+}
+
+.settings-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.settings-header-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-white);
+    letter-spacing: 0.3px;
+}
+
+.settings-title-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--purple-accent);
+}
+
+.settings-modal-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.settings-modal-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.08);
+}
+
+.settings-modal-close:active {
+    transform: scale(0.92);
+}
+
+.settings-modal-body {
+    padding: 16px 18px 22px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    -webkit-overflow-scrolling: touch;
+}
+
+.settings-group {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.settings-group-title {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: 0.8px;
+    padding-left: 6px;
+}
+
+.settings-card-box {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 18px;
+    overflow: hidden;
+}
+
+.setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 16px;
+    gap: 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.setting-row:last-child {
+    border-bottom: none;
+}
+
+.setting-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.setting-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-white);
+    letter-spacing: 0.2px;
+}
+
+.setting-desc {
+    font-size: 11.5px;
+    color: rgba(255, 255, 255, 0.52);
+    line-height: 1.3;
+}
+
+/* iOS Toggle Switch */
+.ios-switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 28px;
+    flex-shrink: 0;
+}
+
+.ios-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.ios-slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 28px;
+    transition: background 0.28s var(--apple-ease), box-shadow 0.28s;
+}
+
+.ios-slider::before {
+    position: absolute;
+    content: "";
+    height: 22px;
+    width: 22px;
+    left: 2px;
+    bottom: 2px;
+    background: #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+    transition: transform 0.28s var(--apple-ease);
+}
+
+.ios-switch input:checked + .ios-slider {
+    background: var(--purple-accent, #c058ff);
+    border-color: rgba(255, 255, 255, 0.28);
+    box-shadow: 0 0 14px var(--purple-glow, rgba(192, 88, 255, 0.45));
+}
+
+.ios-switch input:checked + .ios-slider::before {
+    transform: translateX(20px);
+}
+
+/* Color Accent Picker */
+.setting-color-row {
+    padding: 12px 14px;
+}
+
+.color-options {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.color-dot {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--c);
+    border: 2px solid transparent;
+    cursor: pointer;
+    box-shadow: 0 3px 10px var(--glow);
+    transition: transform 0.22s var(--apple-ease), border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    position: relative;
+}
+
+.color-dot:hover {
+    transform: scale(1.14);
+}
+
+.color-dot.active {
+    transform: scale(1.18);
+    border-color: #ffffff;
+    box-shadow: 0 0 16px var(--glow), inset 0 0 0 2px rgba(0, 0, 0, 0.35);
 }

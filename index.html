@@ -255,7 +255,7 @@
             </div>
 
             <!-- Glass Close Button -->
-            <button class="modal-close-btn" id="modalCloseBtn" aria-label="Закрыть">
+            <button type="button" class="modal-close-btn" id="modalCloseBtn" aria-label="Закрыть">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
                     <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -387,6 +387,102 @@
                         <line x1="8" y1="11" x2="14" y2="11"></line>
                     </svg>
                     <span>Затисніть на 0.5 сек для збільшення</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- iOS Glass Settings Modal -->
+    <div class="settings-modal-backdrop" id="settingsModalBackdrop" aria-hidden="true">
+        <div class="settings-modal-container" id="settingsModalContainer" role="dialog" aria-modal="true">
+            <div class="settings-modal-header">
+                <div class="settings-header-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="settings-title-icon">
+                        <circle cx="12" cy="12" r="3.2"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                    <span>Налаштування</span>
+                </div>
+                <button type="button" class="settings-modal-close" id="settingsModalCloseBtn" aria-label="Закрити">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="settings-modal-body">
+                <!-- Group 1: Швидкодія та анімації -->
+                <div class="settings-group">
+                    <div class="settings-group-title">ШВИДКОДІЯ ТА АНІМАЦІЇ</div>
+                    <div class="settings-card-box">
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <div class="setting-label">Легкий режим (макс. FPS)</div>
+                                <div class="setting-desc">Спрощує важкі розмиття та відключає зум фону для слабких пристроїв</div>
+                            </div>
+                            <label class="ios-switch">
+                                <input type="checkbox" id="settingPerfMode" />
+                                <span class="ios-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <div class="setting-label">3D-нахил карток (Tilt)</div>
+                                <div class="setting-desc">Об'ємний нахил карток за курсором або пальцем</div>
+                            </div>
+                            <label class="ios-switch">
+                                <input type="checkbox" id="settingTiltMode" checked />
+                                <span class="ios-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <div class="setting-label">Тактильний відгук (Haptic)</div>
+                                <div class="setting-desc">Вібрація при натисканні на предмети та кнопки</div>
+                            </div>
+                            <label class="ios-switch">
+                                <input type="checkbox" id="settingHapticMode" checked />
+                                <span class="ios-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Group 2: Тема та сяйво -->
+                <div class="settings-group">
+                    <div class="settings-group-title">АКЦЕНТНИЙ КОЛІР ТА СЯЙВО</div>
+                    <div class="settings-card-box">
+                        <div class="setting-color-row">
+                            <div class="color-options" id="accentColorPicker">
+                                <button type="button" class="color-dot active" data-color="purple" style="--c: #c058ff; --glow: rgba(192, 88, 255, 0.5);" aria-label="Фіолетовий"></button>
+                                <button type="button" class="color-dot" data-color="blue" style="--c: #2997ff; --glow: rgba(41, 151, 255, 0.5);" aria-label="Синій"></button>
+                                <button type="button" class="color-dot" data-color="cyan" style="--c: #00f0ff; --glow: rgba(0, 240, 255, 0.5);" aria-label="Бірюзовий"></button>
+                                <button type="button" class="color-dot" data-color="green" style="--c: #30d158; --glow: rgba(48, 209, 88, 0.5);" aria-label="Смарагдовий"></button>
+                                <button type="button" class="color-dot" data-color="pink" style="--c: #ff2d55; --glow: rgba(255, 45, 85, 0.5);" aria-label="Рожевий"></button>
+                                <button type="button" class="color-dot" data-color="orange" style="--c: #ff9f0a; --glow: rgba(255, 159, 10, 0.5);" aria-label="Помаранчевий"></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Group 3: Інтерфейс -->
+                <div class="settings-group">
+                    <div class="settings-group-title">ІНТЕРФЕЙС</div>
+                    <div class="settings-card-box">
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <div class="setting-label">Таймер уроків у шапці</div>
+                                <div class="setting-desc">Відображати зворотний відлік уроку або перерви</div>
+                            </div>
+                            <label class="ios-switch">
+                                <input type="checkbox" id="settingTimerDisplay" checked />
+                                <span class="ios-slider"></span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

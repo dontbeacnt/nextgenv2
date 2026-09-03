@@ -512,6 +512,11 @@ document.addEventListener('DOMContentLoaded', () => {
         let hovered = false, tgtRX = 0, tgtRY = 0, curRX = 0, curRY = 0, cAnim = null;
 
         function animCard() {
+            if (window.settingsState && !window.settingsState.tiltMode) {
+                card.style.transform = '';
+                cAnim = null;
+                return;
+            }
             if (!hovered && Math.abs(curRX) < 0.01 && Math.abs(curRY) < 0.01) {
                 card.style.transform = '';
                 cAnim = null;
@@ -545,7 +550,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Tactile touch & scale-down with haptic impulse
         card.addEventListener('pointerdown', () => {
             card.classList.add('is-pressed');
-            if ('vibrate' in navigator) {
+            if (window.settingsState?.hapticMode !== false && 'vibrate' in navigator) {
                 try { navigator.vibrate(8); } catch (_) {}
             }
         });
@@ -840,11 +845,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const vpH = window.innerHeight;
         const isMobile = vpW <= 768;
 
-        const padX = isMobile ? 28 : (vpW <= 1024 ? 36 : 64);
-        const padY = isMobile ? 36 : 64;
+        const padX = isMobile ? 32 : (vpW <= 1024 ? 36 : 64);
+        const padY = isMobile ? 48 : 64;
 
-        const targetW = isMobile ? Math.min(380, vpW - padX) : Math.min(876, vpW - padX);
-        const targetH = isMobile ? Math.min(vpH - padY, Math.max(490, Math.min(590, Math.round(vpH * 0.82)))) : Math.min(447, vpH - padY);
+        const targetW = isMobile ? Math.min(328, vpW - padX) : Math.min(876, vpW - padX);
+        const targetH = isMobile ? Math.min(410, vpH - padY) : Math.min(447, vpH - padY);
 
         const left = Math.round((vpW - targetW) / 2);
         const top = Math.round((vpH - targetH) / 2);
@@ -856,7 +861,7 @@ document.addEventListener('DOMContentLoaded', () => {
             height: targetH,
             right: left + targetW,
             bottom: top + targetH,
-            radius: 28
+            radius: isMobile ? 24 : 28
         };
     }
 
@@ -940,7 +945,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Haptic touch impulse
-        if ('vibrate' in navigator) {
+        if (window.settingsState?.hapticMode !== false && 'vibrate' in navigator) {
             try { navigator.vibrate(10); } catch (_) {}
         }
 
@@ -1104,17 +1109,12 @@ document.addEventListener('DOMContentLoaded', () => {
         originCard = card;
         card.classList.add('is-opening');
         originRect = card.getBoundingClientRect();
-        originScrollX = window.scrollX;
-        originScrollY = window.scrollY;
+        originScrollX = window.scrollX || window.pageXOffset || 0;
+        originScrollY = window.scrollY || window.pageYOffset || 0;
         modalState = 'opening';
         const thisTransition = ++transitionId;
 
-        // Prevent background scrolling on mobile touch devices only
         const isMobile = window.innerWidth <= 768 || window.matchMedia('(pointer: coarse)').matches;
-        if (isMobile) {
-            document.documentElement.classList.add('modal-locked');
-            document.body.classList.add('modal-locked');
-        }
 
         modalBackdrop.classList.add('is-open');
         appContainer.classList.add('modal-open');
@@ -1141,7 +1141,7 @@ document.addEventListener('DOMContentLoaded', () => {
             modalHomeBarZone.style.transform = 'translateY(10px)';
         }
 
-        const launchDuration = 520;
+        const launchDuration = isMobile ? 320 : 520;
 
         // 1. Frame Morphing with Apple CASpringAnimation curve (launchEasing)
         const launch = modalContainer.animate([
@@ -1212,7 +1212,8 @@ document.addEventListener('DOMContentLoaded', () => {
         modalBackdrop.classList.add('is-closing');
         appContainer.classList.add('modal-closing');
 
-        const closeDuration = 340;
+        const isMobile = window.innerWidth <= 768 || window.matchMedia('(pointer: coarse)').matches;
+        const closeDuration = isMobile ? 240 : 340;
 
         // Keep originCard cleanly hidden during the flight.
         // It must NOT show up early underneath, eliminating the double-card glitch!
@@ -1234,9 +1235,10 @@ document.addEventListener('DOMContentLoaded', () => {
             modalBackdrop.style.opacity = '';
             appContainer.style.transform = '';
 
-            // Restore page scrollability
-            document.documentElement.classList.remove('modal-locked');
-            document.body.classList.remove('modal-locked');
+            // Ensure exact scroll position remains untouched (fallback if browser shifted)
+            if (typeof originScrollY === 'number' && Math.abs((window.scrollY || window.pageYOffset || 0) - originScrollY) > 2) {
+                window.scrollTo(originScrollX || 0, originScrollY);
+            }
 
             if (originCard) {
                 const landingCard = originCard;
@@ -1270,9 +1272,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Calculate the true unscaled target rectangle of the card accounting for any page scroll
         let targetRect = null;
-        if (originRect) {
-            const scrollDeltaX = window.scrollX - originScrollX;
-            const scrollDeltaY = window.scrollY - originScrollY;
+        if (originCard) {
+            const cardRect = originCard.getBoundingClientRect();
+            if (cardRect.width > 0 && cardRect.height > 0) {
+                targetRect = cardRect;
+            }
+        }
+        if (!targetRect && originRect) {
+            const scrollDeltaX = (window.scrollX || window.pageXOffset || 0) - originScrollX;
+            const scrollDeltaY = (window.scrollY || window.pageYOffset || 0) - originScrollY;
             targetRect = {
                 left: originRect.left - scrollDeltaX,
                 top: originRect.top - scrollDeltaY,
@@ -1281,8 +1289,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 right: originRect.right - scrollDeltaX,
                 bottom: originRect.bottom - scrollDeltaY
             };
-        } else {
-            targetRect = originCard ? originCard.getBoundingClientRect() : currentRect;
+        }
+        if (!targetRect) {
+            targetRect = currentRect;
         }
 
         // Reset any inline transform from drag gesture before WAAPI frame animation begins
@@ -1506,6 +1515,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Escape') {
             if (modalBackdrop && modalBackdrop.classList.contains('is-open')) closeModal();
             if (scheduleModalBackdrop && scheduleModalBackdrop.classList.contains('is-open')) closeScheduleModal();
+            if (typeof closeSettingsModal === 'function' && settingsModalBackdrop && settingsModalBackdrop.classList.contains('is-open')) closeSettingsModal();
         }
     });
 
@@ -1827,5 +1837,147 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         bgAudio.addEventListener('ended', () => avatarBtn.classList.remove('is-playing'));
+    }
+
+    // ==========================================================================
+    // 8. SETTINGS MODAL & SYSTEM PREFERENCES
+    // ==========================================================================
+    const settingsBtn = document.getElementById('settingsBtn');
+    const settingsModalBackdrop = document.getElementById('settingsModalBackdrop');
+    const settingsModalCloseBtn = document.getElementById('settingsModalCloseBtn');
+    const settingPerfMode = document.getElementById('settingPerfMode');
+    const settingTiltMode = document.getElementById('settingTiltMode');
+    const settingHapticMode = document.getElementById('settingHapticMode');
+    const settingTimerDisplay = document.getElementById('settingTimerDisplay');
+    const accentColorPicker = document.getElementById('accentColorPicker');
+
+    const ACCENT_PALETTE = {
+        purple: { accent: '#c058ff', glow: 'rgba(192, 88, 255, 0.45)' },
+        blue:   { accent: '#2997ff', glow: 'rgba(41, 151, 255, 0.45)' },
+        cyan:   { accent: '#00f0ff', glow: 'rgba(0, 240, 255, 0.45)' },
+        green:  { accent: '#30d158', glow: 'rgba(48, 209, 88, 0.45)' },
+        pink:   { accent: '#ff2d55', glow: 'rgba(255, 45, 85, 0.45)' },
+        orange: { accent: '#ff9f0a', glow: 'rgba(255, 159, 10, 0.45)' }
+    };
+
+    window.settingsState = {
+        perfMode: localStorage.getItem('nextgen_perf_mode') === 'true',
+        tiltMode: localStorage.getItem('nextgen_tilt_mode') !== 'false',
+        hapticMode: localStorage.getItem('nextgen_haptic_mode') !== 'false',
+        timerDisplay: localStorage.getItem('nextgen_timer_display') !== 'false',
+        accentColor: localStorage.getItem('nextgen_accent_color') || 'purple'
+    };
+
+    function applySettings() {
+        // 1. Performance mode
+        document.body.classList.toggle('perf-mode', window.settingsState.perfMode);
+        if (settingPerfMode) settingPerfMode.checked = window.settingsState.perfMode;
+
+        // 2. 3D tilt
+        if (settingTiltMode) settingTiltMode.checked = window.settingsState.tiltMode;
+
+        // 3. Haptic
+        if (settingHapticMode) settingHapticMode.checked = window.settingsState.hapticMode;
+
+        // 4. Timer display
+        const navTimer = document.querySelector('.nav-timer');
+        if (navTimer) {
+            navTimer.style.display = window.settingsState.timerDisplay ? '' : 'none';
+        }
+        if (settingTimerDisplay) settingTimerDisplay.checked = window.settingsState.timerDisplay;
+
+        // 5. Accent color
+        const color = ACCENT_PALETTE[window.settingsState.accentColor] || ACCENT_PALETTE.purple;
+        document.documentElement.style.setProperty('--purple-accent', color.accent);
+        document.documentElement.style.setProperty('--purple-glow', color.glow);
+
+        // Update active dot in picker
+        if (accentColorPicker) {
+            accentColorPicker.querySelectorAll('.color-dot').forEach(dot => {
+                dot.classList.toggle('active', dot.getAttribute('data-color') === window.settingsState.accentColor);
+            });
+        }
+    }
+
+    applySettings();
+
+    function openSettingsModal() {
+        if (!settingsModalBackdrop) return;
+        settingsModalBackdrop.classList.add('is-open');
+        settingsModalBackdrop.setAttribute('aria-hidden', 'false');
+        if (window.settingsState.hapticMode && 'vibrate' in navigator) {
+            try { navigator.vibrate(8); } catch (_) {}
+        }
+    }
+
+    function closeSettingsModal() {
+        if (!settingsModalBackdrop) return;
+        settingsModalBackdrop.classList.remove('is-open');
+        settingsModalBackdrop.setAttribute('aria-hidden', 'true');
+    }
+
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', openSettingsModal);
+    }
+
+    if (settingsModalCloseBtn) {
+        settingsModalCloseBtn.addEventListener('click', closeSettingsModal);
+    }
+
+    if (settingsModalBackdrop) {
+        settingsModalBackdrop.addEventListener('click', (e) => {
+            if (e.target === settingsModalBackdrop) closeSettingsModal();
+        });
+    }
+
+    if (settingPerfMode) {
+        settingPerfMode.addEventListener('change', (e) => {
+            window.settingsState.perfMode = e.target.checked;
+            localStorage.setItem('nextgen_perf_mode', e.target.checked);
+            applySettings();
+        });
+    }
+
+    if (settingTiltMode) {
+        settingTiltMode.addEventListener('change', (e) => {
+            window.settingsState.tiltMode = e.target.checked;
+            localStorage.setItem('nextgen_tilt_mode', e.target.checked);
+            if (!e.target.checked) {
+                document.querySelectorAll('.liquid-card').forEach(c => c.style.transform = '');
+            }
+        });
+    }
+
+    if (settingHapticMode) {
+        settingHapticMode.addEventListener('change', (e) => {
+            window.settingsState.hapticMode = e.target.checked;
+            localStorage.setItem('nextgen_haptic_mode', e.target.checked);
+            if (e.target.checked && 'vibrate' in navigator) {
+                try { navigator.vibrate(12); } catch (_) {}
+            }
+        });
+    }
+
+    if (settingTimerDisplay) {
+        settingTimerDisplay.addEventListener('change', (e) => {
+            window.settingsState.timerDisplay = e.target.checked;
+            localStorage.setItem('nextgen_timer_display', e.target.checked);
+            applySettings();
+        });
+    }
+
+    if (accentColorPicker) {
+        accentColorPicker.querySelectorAll('.color-dot').forEach(dot => {
+            dot.addEventListener('click', () => {
+                const colorKey = dot.getAttribute('data-color');
+                if (!colorKey) return;
+                window.settingsState.accentColor = colorKey;
+                localStorage.setItem('nextgen_accent_color', colorKey);
+                applySettings();
+                if (window.settingsState.hapticMode && 'vibrate' in navigator) {
+                    try { navigator.vibrate(10); } catch (_) {}
+                }
+            });
+        });
     }
 });
