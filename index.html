@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0d0d11">
     <title>NextGen Liquid Glass</title>
     <!-- SF Pro Display Font with Cyrillic and Latin support -->
+    <link rel="preconnect" href="https://fonts.cdnfonts.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.cdnfonts.com/css/sf-pro-display">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,15 +15,15 @@
 </head>
 <body>
     <!-- Background Audio Element -->
-    <audio id="bgAudio" src="assets/чечня.mp3" preload="auto"></audio>
+    <audio id="bgAudio" src="assets/чечня.mp3" preload="none"></audio>
 
     <div class="app-container" id="appContainer">
         <!-- Top Header Navigation -->
         <header class="top-header">
             <!-- Left Avatar with Audio Trigger -->
             <div class="avatar-container">
-                <button class="avatar-btn" id="avatarBtn" aria-label="Включить музыку">
-                    <img src="assets/avatar.png" alt="Avatar" class="avatar-img">
+                <button type="button" class="avatar-btn" id="avatarBtn" aria-label="Включить музыку">
+                    <img src="assets/avatar.png" alt="Avatar" class="avatar-img" decoding="async">
                 </button>
             </div>
 
@@ -29,17 +31,23 @@
             <nav class="nav-capsule">
                 <div class="nav-tabs" id="navTabsContainer">
                     <div class="nav-indicator" id="navIndicator"></div>
-                    <button class="nav-tab active" data-tab="gdz">
+                    <button type="button" class="nav-tab active" data-tab="gdz">
                         <span class="tab-text">ГДЗ</span>
                     </button>
-                    <button class="nav-tab" data-tab="schedule">
+                    <button type="button" class="nav-tab" data-tab="schedule">
                         <span class="tab-text">РОЗКЛАД</span>
                     </button>
-                    <button class="nav-tab" data-tab="calc">
+                    <button type="button" class="nav-tab" data-tab="calc">
                         <span class="tab-text">КАЛЬКУЛЯТОР</span>
                     </button>
-                    <button class="nav-tab" data-tab="ai">
+                    <button type="button" class="nav-tab" data-tab="ai">
                         <span class="tab-text">ИИ</span>
+                    </button>
+                    <button type="button" class="nav-tab" data-tab="forum">
+                        <span class="tab-text">ФОРУМ</span>
+                    </button>
+                    <button type="button" class="nav-tab" data-tab="alarm">
+                        <span class="tab-text">ТРИВОГА</span>
                     </button>
                 </div>
 
@@ -53,7 +61,7 @@
 
             <!-- Right Settings Button -->
             <div class="settings-container">
-                <button class="settings-btn" id="settingsBtn" aria-label="Настройки">
+                <button type="button" class="settings-btn" id="settingsBtn" aria-label="Настройки">
                     <svg class="gear-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="3.2"></circle>
                         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
@@ -63,7 +71,7 @@
         </header>
 
         <!-- Main Content -->
-        <main class="main-content">
+        <main class="main-content" id="mainContent">
             <!-- Hero Title with Optical Gaussian Blur Depth Reflection -->
             <div class="hero-wrapper">
                 <h1 class="hero-title">Привет баран</h1>
@@ -93,11 +101,11 @@
             <!-- 12 Liquid Glass Subject Cards Grid -->
             <div class="cards-grid">
                 <!-- 1. Алгебра -->
-                <button class="liquid-card" data-title="ГДЗ Алгебра">
+                <button type="button" class="liquid-card" data-title="ГДЗ Алгебра">
                     <div class="liquid-lens"></div>
                     <div class="liquid-specular-edge"></div>
                     <div class="card-cover-box">
-                        <img src="assets/books/algebra.jpg" class="card-cover-img" alt="ГДЗ Алгебра" />
+                        <img src="assets/books/algebra.jpg" class="card-cover-img" alt="ГДЗ Алгебра" decoding="async" />
                     </div>
                     <div class="card-content">
                         <span class="card-title">ГДЗ Алгебра</span>
@@ -105,11 +113,11 @@
                 </button>
 
                 <!-- 2. Біологія -->
-                <button class="liquid-card" data-title="ГДЗ Біологія">
+                <button type="button" class="liquid-card" data-title="ГДЗ Біологія">
                     <div class="liquid-lens"></div>
                     <div class="liquid-specular-edge"></div>
                     <div class="card-cover-box">
-                        <img src="assets/books/biology.jpg" class="card-cover-img" alt="ГДЗ Біологія" />
+                        <img src="assets/books/biology.jpg" class="card-cover-img" alt="ГДЗ Біологія" decoding="async" />
                     </div>
                     <div class="card-content">
                         <span class="card-title">ГДЗ Біологія</span>
@@ -117,11 +125,11 @@
                 </button>
 
                 <!-- 3. Всесвітня історія -->
-                <button class="liquid-card" data-title="ГДЗ Всесвітня історія">
+                <button type="button" class="liquid-card" data-title="ГДЗ Всесвітня історія">
                     <div class="liquid-lens"></div>
                     <div class="liquid-specular-edge"></div>
                     <div class="card-cover-box">
-                        <img src="assets/books/world_history.jpg" class="card-cover-img" alt="ГДЗ Всесвітня історія" />
+                        <img src="assets/books/world_history.jpg" class="card-cover-img" alt="ГДЗ Всесвітня історія" decoding="async" />
                     </div>
                     <div class="card-content">
                         <span class="card-title">ГДЗ Всесвітня історія</span>
@@ -129,11 +137,11 @@
                 </button>
 
                 <!-- 4. Географія -->
-                <button class="liquid-card" data-title="ГДЗ Географія">
+                <button type="button" class="liquid-card" data-title="ГДЗ Географія">
                     <div class="liquid-lens"></div>
                     <div class="liquid-specular-edge"></div>
                     <div class="card-cover-box">
-                        <img src="assets/books/geography.jpg" class="card-cover-img" alt="ГДЗ Географія" />
+                        <img src="assets/books/geography.jpg" class="card-cover-img" alt="ГДЗ Географія" loading="lazy" decoding="async" />
                     </div>
                     <div class="card-content">
                         <span class="card-title">ГДЗ Географія</span>
@@ -141,11 +149,11 @@
                 </button>
 
                 <!-- 5. Геометрія -->
-                <button class="liquid-card" data-title="ГДЗ Геометрія">
+                <button type="button" class="liquid-card" data-title="ГДЗ Геометрія">
                     <div class="liquid-lens"></div>
                     <div class="liquid-specular-edge"></div>
                     <div class="card-cover-box">
-                        <img src="assets/books/geometry.jpg" class="card-cover-img" alt="ГДЗ Геометрія" />
+                        <img src="assets/books/geometry.jpg" class="card-cover-img" alt="ГДЗ Геометрія" loading="lazy" decoding="async" />
                     </div>
                     <div class="card-content">
                         <span class="card-title">ГДЗ Геометрія</span>
@@ -153,11 +161,11 @@
                 </button>
 
                 <!-- 6. Громадянська освіта -->
-                <button class="liquid-card" data-title="ГДЗ Громадянська освіта">
+                <button type="button" class="liquid-card" data-title="ГДЗ Громадянська освіта">
                     <div class="liquid-lens"></div>
                     <div class="liquid-specular-edge"></div>
                     <div class="card-cover-box">
-                        <img src="assets/books/civics.jpg" class="card-cover-img" alt="ГДЗ Громадянська освіта" />
+                        <img src="assets/books/civics.jpg" class="card-cover-img" alt="ГДЗ Громадянська освіта" loading="lazy" decoding="async" />
                     </div>
                     <div class="card-content">
                         <span class="card-title">ГДЗ Громадянська освіта</span>
@@ -165,11 +173,11 @@
                 </button>
 
                 <!-- 7. Здоров'я, безпека та добробут -->
-                <button class="liquid-card" data-title="ГДЗ Здоров'я, безпека та добробут">
+                <button type="button" class="liquid-card" data-title="ГДЗ Здоров'я, безпека та добробут">
                     <div class="liquid-lens"></div>
                     <div class="liquid-specular-edge"></div>
                     <div class="card-cover-box">
-                        <img src="assets/books/health.jpg" class="card-cover-img" alt="ГДЗ Здоров'я, безпека та добробут" />
+                        <img src="assets/books/health.jpg" class="card-cover-img" alt="ГДЗ Здоров'я, безпека та добробут" loading="lazy" decoding="async" />
                     </div>
                     <div class="card-content">
                         <span class="card-title">ГДЗ Здоров'я, безпека та добробут</span>
@@ -177,11 +185,11 @@
                 </button>
 
                 <!-- 8. Історія України -->
-                <button class="liquid-card" data-title="ГДЗ Історія України">
+                <button type="button" class="liquid-card" data-title="ГДЗ Історія України">
                     <div class="liquid-lens"></div>
                     <div class="liquid-specular-edge"></div>
                     <div class="card-cover-box">
-                        <img src="assets/books/ukr_history.jpg" class="card-cover-img" alt="ГДЗ Історія України" />
+                        <img src="assets/books/ukr_history.jpg" class="card-cover-img" alt="ГДЗ Історія України" loading="lazy" decoding="async" />
                     </div>
                     <div class="card-content">
                         <span class="card-title">ГДЗ Історія України</span>
@@ -189,11 +197,11 @@
                 </button>
 
                 <!-- 9. Підприємництво і фінансова грамотність -->
-                <button class="liquid-card" data-title="ГДЗ Підприємництво і фінансова грамотність">
+                <button type="button" class="liquid-card" data-title="ГДЗ Підприємництво і фінансова грамотність">
                     <div class="liquid-lens"></div>
                     <div class="liquid-specular-edge"></div>
                     <div class="card-cover-box">
-                        <img src="assets/books/entrepreneurship.jpg" class="card-cover-img" alt="ГДЗ Підприємництво і фінансова грамотність" />
+                        <img src="assets/books/entrepreneurship.jpg" class="card-cover-img" alt="ГДЗ Підприємництво і фінансова грамотність" loading="lazy" decoding="async" />
                     </div>
                     <div class="card-content">
                         <span class="card-title">ГДЗ Підприємництво і фінансова грамотність</span>
@@ -201,11 +209,11 @@
                 </button>
 
                 <!-- 10. Українська мова -->
-                <button class="liquid-card" data-title="ГДЗ Українська мова">
+                <button type="button" class="liquid-card" data-title="ГДЗ Українська мова">
                     <div class="liquid-lens"></div>
                     <div class="liquid-specular-edge"></div>
                     <div class="card-cover-box">
-                        <img src="assets/books/ukr_mova.jpg" class="card-cover-img" alt="ГДЗ Українська мова" />
+                        <img src="assets/books/ukr_mova.jpg" class="card-cover-img" alt="ГДЗ Українська мова" loading="lazy" decoding="async" />
                     </div>
                     <div class="card-content">
                         <span class="card-title">ГДЗ Українська мова</span>
@@ -213,11 +221,11 @@
                 </button>
 
                 <!-- 11. Фізика -->
-                <button class="liquid-card" data-title="ГДЗ Фізика">
+                <button type="button" class="liquid-card" data-title="ГДЗ Фізика">
                     <div class="liquid-lens"></div>
                     <div class="liquid-specular-edge"></div>
                     <div class="card-cover-box">
-                        <img src="assets/books/physics.jpg" class="card-cover-img" alt="ГДЗ Фізика" />
+                        <img src="assets/books/physics.jpg" class="card-cover-img" alt="ГДЗ Фізика" loading="lazy" decoding="async" />
                     </div>
                     <div class="card-content">
                         <span class="card-title">ГДЗ Фізика</span>
@@ -225,14 +233,50 @@
                 </button>
 
                 <!-- 12. Хімія -->
-                <button class="liquid-card" data-title="ГДЗ Хімія">
+                <button type="button" class="liquid-card" data-title="ГДЗ Хімія">
                     <div class="liquid-lens"></div>
                     <div class="liquid-specular-edge"></div>
                     <div class="card-cover-box">
-                        <img src="assets/books/chemistry.jpg" class="card-cover-img" alt="ГДЗ Хімія" />
+                        <img src="assets/books/chemistry.jpg" class="card-cover-img" alt="ГДЗ Хімія" loading="lazy" decoding="async" />
                     </div>
                     <div class="card-content">
                         <span class="card-title">ГДЗ Хімія</span>
+                    </div>
+                </button>
+
+                <!-- 13. Англійська мова -->
+                <button type="button" class="liquid-card" data-title="ГДЗ Англійська мова">
+                    <div class="liquid-lens"></div>
+                    <div class="liquid-specular-edge"></div>
+                    <div class="card-cover-box">
+                        <img src="assets/books/english.jpg" class="card-cover-img" alt="ГДЗ Англійська мова" loading="lazy" decoding="async" />
+                    </div>
+                    <div class="card-content">
+                        <span class="card-title">ГДЗ Англійська мова</span>
+                    </div>
+                </button>
+
+                <!-- 14. Українська література -->
+                <button type="button" class="liquid-card" data-title="ГДЗ Українська література">
+                    <div class="liquid-lens"></div>
+                    <div class="liquid-specular-edge"></div>
+                    <div class="card-cover-box">
+                        <img src="assets/books/ukr_lit.jpg" class="card-cover-img" alt="ГДЗ Українська література" loading="lazy" decoding="async" />
+                    </div>
+                    <div class="card-content">
+                        <span class="card-title">ГДЗ Українська література</span>
+                    </div>
+                </button>
+
+                <!-- 15. Зарубіжна література -->
+                <button type="button" class="liquid-card" data-title="ГДЗ Зарубіжна література">
+                    <div class="liquid-lens"></div>
+                    <div class="liquid-specular-edge"></div>
+                    <div class="card-cover-box">
+                        <img src="assets/books/world_lit.jpg" class="card-cover-img" alt="ГДЗ Зарубіжна література" loading="lazy" decoding="async" />
+                    </div>
+                    <div class="card-content">
+                        <span class="card-title">ГДЗ Зарубіжна література</span>
                     </div>
                 </button>
             </div>
@@ -241,13 +285,20 @@
 
     <!-- iOS Translucent Liquid Glass Modal Window -->
     <div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">
-        <div class="modal-container" id="modalContainer" role="dialog" aria-modal="true">
+        <div class="modal-container" id="modalContainer" role="dialog" aria-modal="true" data-lenis-prevent>
             <!-- iOS Launch Screen Crossfade View matching Card Twin -->
             <div class="modal-launch-view" id="modalLaunchView" aria-hidden="true">
                 <div class="liquid-lens"></div>
                 <div class="liquid-specular-edge"></div>
+                <div class="card-schedule-header" id="modalLaunchScheduleHeader" style="display: none;">
+                    <span class="lesson-num-badge" id="modalLaunchLessonNum"></span>
+                    <span class="lesson-time-badge" id="modalLaunchLessonTime"></span>
+                </div>
                 <div class="card-cover-box" id="modalLaunchCoverBox" style="display: none;">
                     <img src="" class="card-cover-img" id="modalLaunchCoverImg" alt="" />
+                </div>
+                <div class="card-icon-box" id="modalLaunchIconBox" style="display: none;">
+                    <div class="card-icon-placeholder" id="modalLaunchIconPlaceholder"></div>
                 </div>
                 <div class="card-content">
                     <span class="card-title" id="modalLaunchTitle">ГДЗ</span>
@@ -308,10 +359,10 @@
 
     <!-- Column Calculator Modal -->
     <div class="calc-modal-backdrop" id="calcModalBackdrop" aria-hidden="true">
-        <div class="calc-modal-container" id="calcModalContainer" role="dialog" aria-modal="true">
+        <div class="calc-modal-container" id="calcModalContainer" role="dialog" aria-modal="true" data-lenis-prevent>
             <div class="calc-modal-header">
                 <div class="calc-title">Калькулятор в стовпчик</div>
-                <button class="calc-modal-close" id="calcModalCloseBtn" aria-label="Закрити">
+                <button type="button" class="calc-modal-close" id="calcModalCloseBtn" aria-label="Закрити">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -322,10 +373,10 @@
             <div class="calc-body">
                 <!-- Operation selector -->
                 <div class="calc-op-selector">
-                    <button class="calc-op-btn active" data-op="+" id="calcOpAdd">+</button>
-                    <button class="calc-op-btn" data-op="-" id="calcOpSub">−</button>
-                    <button class="calc-op-btn" data-op="*" id="calcOpMul">×</button>
-                    <button class="calc-op-btn" data-op="/" id="calcOpDiv">÷</button>
+                    <button type="button" class="calc-op-btn active" data-op="+" id="calcOpAdd">+</button>
+                    <button type="button" class="calc-op-btn" data-op="-" id="calcOpSub">−</button>
+                    <button type="button" class="calc-op-btn" data-op="*" id="calcOpMul">×</button>
+                    <button type="button" class="calc-op-btn" data-op="/" id="calcOpDiv">÷</button>
                 </div>
 
                 <!-- Input fields -->
@@ -334,7 +385,7 @@
                     <input type="text" class="calc-input" id="calcNum2" placeholder="Друге число" inputmode="decimal" autocomplete="off" />
                 </div>
 
-                <button class="calc-solve-btn" id="calcSolveBtn">Обчислити</button>
+                <button type="button" class="calc-solve-btn" id="calcSolveBtn">Обчислити</button>
 
                 <!-- Result area -->
                 <div class="calc-result-area" id="calcResultArea"></div>
@@ -344,18 +395,18 @@
 
     <!-- Schedule Viewer Modal -->
     <div class="schedule-modal-backdrop" id="scheduleModalBackdrop" aria-hidden="true">
-        <div class="schedule-modal-container" id="scheduleModalContainer" role="dialog" aria-modal="true">
+        <div class="schedule-modal-container" id="scheduleModalContainer" role="dialog" aria-modal="true" data-lenis-prevent>
             <!-- Modal Header with segmented control and close button -->
             <div class="schedule-modal-header">
                 <div class="schedule-segmented-control" role="tablist">
-                    <button class="seg-btn active" id="segBtnBells" data-view="bells" role="tab" aria-selected="true">
+                    <button type="button" class="seg-btn active" id="segBtnBells" data-view="bells" role="tab" aria-selected="true">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="seg-icon">
                             <circle cx="12" cy="12" r="10"></circle>
                             <polyline points="12 6 12 12 16 14"></polyline>
                         </svg>
                         <span>Час уроків та перерв</span>
                     </button>
-                    <button class="seg-btn" id="segBtnLessons" data-view="lessons" role="tab" aria-selected="false">
+                    <button type="button" class="seg-btn" id="segBtnLessons" data-view="lessons" role="tab" aria-selected="false">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="seg-icon">
                             <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
                             <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
@@ -363,7 +414,7 @@
                         <span>Які предмети</span>
                     </button>
                 </div>
-                <button class="schedule-modal-close" id="scheduleModalCloseBtn" aria-label="Закрити">
+                <button type="button" class="schedule-modal-close" id="scheduleModalCloseBtn" aria-label="Закрити">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -372,12 +423,12 @@
             </div>
 
             <!-- Image Viewer Area -->
-            <div class="schedule-image-viewer" id="scheduleImageViewer">
+            <div class="schedule-image-viewer" id="scheduleImageViewer" data-lenis-prevent>
                 <div class="schedule-img-wrap active" id="wrapBells">
-                    <img src="assets/schedule_bells.jpg" class="schedule-view-img" alt="Час уроків та перерв" draggable="false" />
+                    <img src="assets/schedule_bells.jpg" class="schedule-view-img" alt="Час уроків та перерв" draggable="false" loading="lazy" decoding="async" />
                 </div>
                 <div class="schedule-img-wrap" id="wrapLessons">
-                    <img src="assets/schedule_lessons.jpg" class="schedule-view-img" alt="Розклад предметів 8-А" draggable="false" />
+                    <img src="assets/schedule_lessons.jpg" class="schedule-view-img" alt="Розклад предметів 8-А" draggable="false" loading="lazy" decoding="async" />
                 </div>
                 <div class="schedule-zoom-hint" id="scheduleZoomHint">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
@@ -392,9 +443,74 @@
         </div>
     </div>
 
+    <!-- Air Raid Alarm Modal (Мапа тривог) -->
+    <div class="alarm-modal-backdrop" id="alarmModalBackdrop" aria-hidden="true">
+        <div class="alarm-modal-container" id="alarmModalContainer" role="dialog" aria-modal="true" data-lenis-prevent>
+            <div class="alarm-modal-header">
+                <div class="alarm-modal-title">
+                    <span class="alarm-live-pulse"></span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="alarm-icon">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    <span>Мапа повітряних тривог</span>
+                </div>
+                <button type="button" class="alarm-modal-close" id="alarmModalCloseBtn" aria-label="Закрити">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="alarm-map-wrapper">
+                <iframe src="https://alerts.in.ua/?embed" class="alarm-iframe" title="Мапа повітряних тривог" loading="lazy"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Assistant Modal (Live Embedded Iframe) -->
+    <div class="ai-modal-backdrop" id="aiModalBackdrop" aria-hidden="true">
+        <div class="ai-modal-container" id="aiModalContainer" role="dialog" aria-modal="true" data-lenis-prevent>
+            <div class="ai-modal-header">
+                <div class="ai-modal-title">
+                    <span class="ai-live-sparkle">✨</span>
+                    <span id="aiModalHeaderTitle">Google Gemini</span>
+                    <div class="ai-header-selector-wrap">
+                        <select id="aiQuickSelector" class="ai-header-select" aria-label="Обрати ШІ">
+                            <option value="gemini">Google Gemini</option>
+                            <option value="chatgpt">ChatGPT (OpenAI)</option>
+                            <option value="claude">Claude 3.5 Sonnet</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="ai-header-actions">
+                    <a id="aiExternalLinkBtn" href="https://gemini.google.com" target="_blank" rel="noopener" class="ai-external-btn" title="Відкрити в новій вкладці">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                            <polyline points="15 3 21 3 21 9"></polyline>
+                            <line x1="10" y1="14" x2="21" y2="3"></line>
+                        </svg>
+                    </a>
+                    <button type="button" class="ai-modal-close" id="aiModalCloseBtn" aria-label="Закрити">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="ai-chat-wrapper">
+                <iframe id="aiIframe" src="https://gemini.google.com" class="ai-iframe" title="Штучний Інтелект" loading="lazy" allow="clipboard-read; clipboard-write; microphone; camera; encrypted-media"></iframe>
+            </div>
+        </div>
+    </div>
+
     <!-- iOS Glass Settings Modal -->
     <div class="settings-modal-backdrop" id="settingsModalBackdrop" aria-hidden="true">
-        <div class="settings-modal-container" id="settingsModalContainer" role="dialog" aria-modal="true">
+        <div class="settings-modal-container" id="settingsModalContainer" role="dialog" aria-modal="true" data-lenis-prevent>
             <div class="settings-modal-header">
                 <div class="settings-header-title">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="settings-title-icon">
@@ -411,20 +527,47 @@
                 </button>
             </div>
 
-            <div class="settings-modal-body">
+            <div class="settings-modal-body" data-lenis-prevent>
                 <!-- Group 1: Швидкодія та анімації -->
                 <div class="settings-group">
                     <div class="settings-group-title">ШВИДКОДІЯ ТА АНІМАЦІЇ</div>
                     <div class="settings-card-box">
-                        <div class="setting-row">
+                        <!-- 3-level Performance Slider -->
+                        <div class="setting-slider-row">
                             <div class="setting-info">
-                                <div class="setting-label">Легкий режим (макс. FPS)</div>
-                                <div class="setting-desc">Спрощує важкі розмиття та відключає зум фону для слабких пристроїв</div>
+                                <div class="setting-slider-header">
+                                    <span class="setting-label">Оптимізація для пристрою</span>
+                                    <span class="perf-level-badge" id="perfLevelBadge">Якість</span>
+                                </div>
+                                <div class="setting-desc" id="perfLevelDesc">Максимальна якість: соковиті розмиття, м'який Motion Blur та 3D-глибина (як зараз)</div>
                             </div>
-                            <label class="ios-switch">
-                                <input type="checkbox" id="settingPerfMode" />
-                                <span class="ios-slider"></span>
-                            </label>
+                            <div class="ios-slider-container">
+                                <input type="range" min="0" max="2" step="1" value="0" id="settingPerfSlider" class="perf-range-input" aria-label="Рівень оптимізації" />
+                                <div class="slider-step-marks">
+                                    <span class="step-mark active" data-step="0">Якість</span>
+                                    <span class="step-mark" data-step="1">Баланс</span>
+                                    <span class="step-mark" data-step="2">Макс. FPS</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Motion Blur Strength Slider (Unlocks only in Quality mode) -->
+                        <div class="setting-slider-row is-unlocked" id="settingBlurRow">
+                            <div class="setting-info">
+                                <div class="setting-slider-header">
+                                    <span class="setting-label">Сила Motion Blur</span>
+                                    <span class="perf-level-badge blur-badge" id="blurLevelBadge">3.0px</span>
+                                </div>
+                                <div class="setting-desc" id="blurLevelDesc">Інтенсивність кінематографічного розмиття при русі вікон</div>
+                            </div>
+                            <div class="ios-slider-container">
+                                <input type="range" min="1" max="7" step="0.5" value="3" id="settingBlurSlider" class="perf-range-input blur-range-input" aria-label="Сила моушен блюра" />
+                                <div class="slider-step-marks blur-step-marks">
+                                    <span class="step-mark" data-blur="1.5">Слабкий</span>
+                                    <span class="step-mark active" data-blur="3">Стандартний</span>
+                                    <span class="step-mark" data-blur="5.5">Максимальний</span>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="setting-row">
@@ -448,6 +591,23 @@
                                 <span class="ios-slider"></span>
                             </label>
                         </div>
+
+                        <!-- Animation Dynamics & Speed Preset -->
+                        <div class="setting-row setting-ai-row">
+                            <div class="setting-info">
+                                <div class="setting-label">Динаміка та швидкість анімацій</div>
+                                <div class="setting-desc" id="animPresetDesc">«Кінематограф Apple»: збалансована пружина з м'яким розквітом</div>
+                            </div>
+                            <div class="ios-select-wrap">
+                                <select id="settingAnimPreset" class="ios-ai-select" aria-label="Обрати пресет анімацій">
+                                    <option value="cinematic">🎬 «Кінематограф Apple»</option>
+                                    <option value="fast">⚡ «Блискавка» (Швидко)</option>
+                                    <option value="liquid">💧 «Рідка Крапля» (Пружно)</option>
+                                    <option value="slow">🌌 «Невагомість» (Ширяння)</option>
+                                    <option value="instant">🚀 «Миттєвий 120 FPS»</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -463,12 +623,49 @@
                                 <button type="button" class="color-dot" data-color="green" style="--c: #30d158; --glow: rgba(48, 209, 88, 0.5);" aria-label="Смарагдовий"></button>
                                 <button type="button" class="color-dot" data-color="pink" style="--c: #ff2d55; --glow: rgba(255, 45, 85, 0.5);" aria-label="Рожевий"></button>
                                 <button type="button" class="color-dot" data-color="orange" style="--c: #ff9f0a; --glow: rgba(255, 159, 10, 0.5);" aria-label="Помаранчевий"></button>
+                                <div class="color-dot-custom-wrap" title="Обрати власний колір">
+                                    <input type="color" id="customColorInput" class="custom-color-input" value="#c058ff" aria-label="Обрати власний колір" />
+                                    <button type="button" class="color-dot custom-color-dot" id="customColorBtn" aria-label="Свій колір">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="custom-plus-icon"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Group 3: Інтерфейс -->
+                <!-- Group 3: Персоналізація та атмосфера -->
+                <div class="settings-group">
+                    <div class="settings-group-title">ПЕРСОНАЛІЗАЦІЯ ТА АТМОСФЕРА</div>
+                    <div class="settings-card-box">
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <div class="setting-label">Звуковий відгук (Apple Taptic Audio)</div>
+                                <div class="setting-desc">Синтезовані приємні мікро-кліки при взаємодії з інтерфейсом</div>
+                            </div>
+                            <label class="ios-switch">
+                                <input type="checkbox" id="settingSoundFx" checked />
+                                <span class="ios-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="setting-row setting-ai-row">
+                            <div class="setting-info">
+                                <div class="setting-label">Атмосферне сяйво фону</div>
+                                <div class="setting-desc" id="auraStyleDesc">✨ Синхронно з акцентом: колір фону змінюється разом із темою</div>
+                            </div>
+                            <div class="ios-select-wrap">
+                                <select id="settingAuraStyle" class="ios-ai-select" aria-label="Обрати стиль сяйва фону">
+                                    <option value="dynamic">✨ Синхронно з акцентом</option>
+                                    <option value="aurora">🌿 «Північна Аврора» (Смарагд)</option>
+                                    <option value="oled">🖤 «Глибокий онікс» (Pure OLED)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Group 4: Інтерфейс -->
                 <div class="settings-group">
                     <div class="settings-group-title">ІНТЕРФЕЙС</div>
                     <div class="settings-card-box">
@@ -484,10 +681,86 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Group 5: Штучний інтелект (Iframe) -->
+                <div class="settings-group">
+                    <div class="settings-group-title">ШТУЧНИЙ ІНТЕЛЕКТ (ВБУДОВАНИЙ IFRAME)</div>
+                    <div class="settings-card-box">
+                        <div class="setting-row setting-ai-row">
+                            <div class="setting-info">
+                                <div class="setting-label">Обраний ШІ для вікна</div>
+                                <div class="setting-desc">Яку нейромережу відкривати у вікні (iframe) за замовчуванням</div>
+                            </div>
+                            <div class="ios-select-wrap">
+                                <select id="settingAiSelect" class="ios-ai-select" aria-label="Обрати ШІ за замовчуванням">
+                                    <option value="gemini">Google Gemini</option>
+                                    <option value="chatgpt">ChatGPT (OpenAI)</option>
+                                    <option value="claude">Claude 3.5 Sonnet</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Instruction Card with link to extension -->
+                        <div class="setting-instruction-card">
+                            <div class="instruction-header">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="instruction-icon">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                </svg>
+                                <span>Інструкція: як зняти блокування iframe</span>
+                            </div>
+                            <p class="instruction-text">
+                                Gemini, ChatGPT та Claude захищені браузерним правилом <code>X-Frame-Options</code>. Щоб вони завантажувалися прямо всередині нашого сайту, встановіть офіційне розширення для Chrome:
+                            </p>
+                            <a href="https://chromewebstore.google.com/detail/ignore-x-frame-headers/gleekbfjekiniecknbkamfmkohkpodhe" target="_blank" rel="noopener" class="instruction-ext-btn">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="ext-btn-icon">
+                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                    <polyline points="15 3 21 3 21 9"></polyline>
+                                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                                </svg>
+                                <span>Встановити «Ignore X-Frame headers» (Chrome Web Store)</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- iOS Liquid Glass Split Subject Modal (для уроків з 2 предметів) -->
+    <div class="split-modal-backdrop" id="splitModalBackdrop" aria-hidden="true">
+        <div class="split-modal-container" id="splitModalContainer" role="dialog" aria-modal="true" data-lenis-prevent>
+            <div class="split-modal-header">
+                <div class="split-modal-badges">
+                    <span class="lesson-num-badge" id="splitModalLessonBadge">5 УРОК</span>
+                    <span class="lesson-time-badge" id="splitModalTimeBadge">11:40 - 12:25</span>
+                </div>
+                <button type="button" class="split-modal-close" id="splitModalCloseBtn" aria-label="Закрити">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="split-modal-body">
+                <h3 class="split-modal-title" id="splitModalTitle">Оберіть предмет</h3>
+                <p class="split-modal-subtitle" id="splitModalSubtitle">Цей урок поділено на підгрупи. Оберіть потрібний предмет з підручником або ГДЗ:</p>
+                <div class="split-modal-options" id="splitModalOptions">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- iOS Liquid Glass Floating Toast Notification -->
+    <div class="glass-toast" id="glassToast" aria-live="polite" role="status">
+        <span class="toast-icon" id="toastIcon">💬</span>
+        <span class="toast-message" id="toastMessage">Повідомлення</span>
+    </div>
+
+    <!-- Lenis Smooth Scroll -->
+    <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.20/dist/lenis.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

@@ -1,4 +1,404 @@
 document.addEventListener('DOMContentLoaded', () => {
+    let modalState = 'closed';
+
+    // ==========================================================================
+    // 0. SYSTEM SETTINGS MANAGER & LOCALSTORAGE PERSISTENCE ENGINE
+    // ==========================================================================
+    const ACCENT_PALETTE = {
+        purple: { accent: '#c058ff', glow: 'rgba(192, 88, 255, 0.45)' },
+        blue:   { accent: '#2997ff', glow: 'rgba(41, 151, 255, 0.45)' },
+        cyan:   { accent: '#00f0ff', glow: 'rgba(0, 240, 255, 0.45)' },
+        green:  { accent: '#30d158', glow: 'rgba(48, 209, 88, 0.45)' },
+        pink:   { accent: '#ff2d55', glow: 'rgba(255, 45, 85, 0.45)' },
+        orange: { accent: '#ff9f0a', glow: 'rgba(255, 159, 10, 0.45)' }
+    };
+
+    function hexToRgb(hex) {
+        let clean = (hex || '#c058ff').replace('#', '');
+        if (clean.length === 3) clean = clean.split('').map(c => c + c).join('');
+        const num = parseInt(clean, 16) || 0;
+        return {
+            r: (num >> 16) & 255,
+            g: (num >> 8) & 255,
+            b: num & 255
+        };
+    }
+
+    function hexToGlow(hex, alpha = 0.45) {
+        const { r, g, b } = hexToRgb(hex);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    function getAccentConfig(state) {
+        if (state.accentColor === 'custom' && state.customAccentHex) {
+            return {
+                accent: state.customAccentHex,
+                glow: hexToGlow(state.customAccentHex, 0.45)
+            };
+        }
+        return ACCENT_PALETTE[state.accentColor] || ACCENT_PALETTE.purple;
+    }
+
+    const AURA_PALETTES = {
+        purple: {
+            glow1: 'rgba(192, 88, 255, 0.20)',
+            glow2: 'rgba(140, 50, 255, 0.12)',
+            reflection: 'rgba(192, 88, 255, 0.75)'
+        },
+        blue: {
+            glow1: 'rgba(41, 151, 255, 0.20)',
+            glow2: 'rgba(0, 200, 255, 0.12)',
+            reflection: 'rgba(41, 151, 255, 0.75)'
+        },
+        cyan: {
+            glow1: 'rgba(0, 240, 255, 0.20)',
+            glow2: 'rgba(0, 160, 255, 0.12)',
+            reflection: 'rgba(0, 240, 255, 0.75)'
+        },
+        green: {
+            glow1: 'rgba(48, 209, 88, 0.18)',
+            glow2: 'rgba(0, 240, 255, 0.12)',
+            reflection: 'rgba(48, 209, 88, 0.75)'
+        },
+        pink: {
+            glow1: 'rgba(255, 45, 85, 0.20)',
+            glow2: 'rgba(255, 100, 160, 0.12)',
+            reflection: 'rgba(255, 45, 85, 0.75)'
+        },
+        orange: {
+            glow1: 'rgba(255, 159, 10, 0.20)',
+            glow2: 'rgba(255, 80, 0, 0.12)',
+            reflection: 'rgba(255, 159, 10, 0.75)'
+        }
+    };
+
+    function getAuraConfig(state) {
+        if (!state) return AURA_PALETTES.purple;
+        if (state.accentColor === 'custom') {
+            const rgb = hexToRgb(state.customAccentHex || '#c058ff');
+            return {
+                glow1: `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.20)`,
+                glow2: `rgba(${Math.round(rgb.r * 0.75)}, ${Math.round(rgb.g * 0.75)}, ${Math.round(rgb.b * 0.95)}, 0.12)`,
+                reflection: `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.75)`
+            };
+        }
+        return AURA_PALETTES[state.accentColor] || AURA_PALETTES.purple;
+    }
+
+    const ANIM_PRESETS = {
+        cinematic: {
+            name: '«Кінематограф Apple»',
+            desc: '«Кінематограф Apple»: збалансована пружина з м\'яким розквітом',
+            openDur: 380,
+            closeDur: 260,
+            openMobileDur: 330,
+            closeMobileDur: 220,
+            openEase: 'cubic-bezier(0.22, 1.12, 0.36, 1)',
+            closeEase: 'cubic-bezier(0.32, 0, 0.15, 1)'
+        },
+        fast: {
+            name: '«Блискавка»',
+            desc: '«Блискавка»: надшвидкий відгук та різке відкриття для продуктивності',
+            openDur: 220,
+            closeDur: 160,
+            openMobileDur: 200,
+            closeMobileDur: 140,
+            openEase: 'cubic-bezier(0.16, 1, 0.3, 1)',
+            closeEase: 'cubic-bezier(0.25, 1, 0.5, 1)'
+        },
+        liquid: {
+            name: '«Рідка Крапля»',
+            desc: '«Рідка Крапля»: соковитий перелив рідкого скла з відчутним відскоком',
+            openDur: 480,
+            closeDur: 320,
+            openMobileDur: 420,
+            closeMobileDur: 270,
+            openEase: 'cubic-bezier(0.34, 1.28, 0.64, 1)',
+            closeEase: 'cubic-bezier(0.32, 0, 0.15, 1)'
+        },
+        slow: {
+            name: '«Невагомість»',
+            desc: '«Невагомість»: гіпнотичне плавне ширяння з глибоким уповільненням',
+            openDur: 620,
+            closeDur: 420,
+            openMobileDur: 520,
+            closeMobileDur: 340,
+            openEase: 'cubic-bezier(0.16, 1, 0.25, 1)',
+            closeEase: 'cubic-bezier(0.25, 1, 0.35, 1)'
+        },
+        instant: {
+            name: '«Миттєвий 120 FPS»',
+            desc: '«Миттєвий 120 FPS»: майже миттєве розгортання без затримок',
+            openDur: 140,
+            closeDur: 110,
+            openMobileDur: 130,
+            closeMobileDur: 100,
+            openEase: 'cubic-bezier(0, 0, 0.2, 1)',
+            closeEase: 'cubic-bezier(0.4, 0, 1, 1)'
+        }
+    };
+
+    const AURA_DESCS = {
+        dynamic: '✨ Синхронно з акцентом: колір фону автоматично змінюється разом із темою',
+        aurora: '«Північна Аврора»: свіжі смарагдово-аквамаринові відблиски',
+        oled: '«Глибокий онікс»: бездоганний чорний OLED для максимального контрасту'
+    };
+
+    function playTapticAudio(type = 'click') {
+        if (!window.settingsState?.soundFx) return;
+        try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return;
+            if (!window._tapticAudioCtx) window._tapticAudioCtx = new AudioCtx();
+            const ctx = window._tapticAudioCtx;
+            if (ctx.state === 'suspended') ctx.resume();
+
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            const t = ctx.currentTime;
+            osc.type = 'sine';
+
+            if (type === 'click') {
+                osc.frequency.setValueAtTime(840, t);
+                osc.frequency.exponentialRampToValueAtTime(320, t + 0.024);
+                gain.gain.setValueAtTime(0.08, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.024);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(t);
+                osc.stop(t + 0.025);
+            } else if (type === 'open') {
+                osc.frequency.setValueAtTime(360, t);
+                osc.frequency.exponentialRampToValueAtTime(740, t + 0.06);
+                gain.gain.setValueAtTime(0.07, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(t);
+                osc.stop(t + 0.065);
+            } else if (type === 'close') {
+                osc.frequency.setValueAtTime(680, t);
+                osc.frequency.exponentialRampToValueAtTime(300, t + 0.05);
+                gain.gain.setValueAtTime(0.06, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(t);
+                osc.stop(t + 0.055);
+            }
+        } catch (_) {}
+    }
+
+    const AI_SERVICES = {
+        gemini: { name: 'Google Gemini', url: 'https://gemini.google.com' },
+        chatgpt: { name: 'ChatGPT (OpenAI)', url: 'https://chatgpt.com' },
+        claude: { name: 'Claude 3.5 Sonnet', url: 'https://claude.ai' }
+    };
+
+    const PERF_TIERS = {
+        0: { badge: 'Якість', desc: 'Максимальна якість: соковиті розмиття, м\'який Motion Blur та 3D-глибина (як зараз)' },
+        1: { badge: 'Баланс', desc: 'Для слабких пристроїв: легкі розмиття, без зуму фону, стабільні 60 FPS' },
+        2: { badge: 'Макс. FPS', desc: 'Для дуже слабких пристроїв: без важких розмиття та тіней, прискорений інтерфейс' }
+    };
+
+    function readStoredSettings() {
+        const defaults = {
+            perfLevel: 0,
+            motionBlurStrength: 3.0,
+            tiltMode: true,
+            hapticMode: true,
+            timerDisplay: true,
+            accentColor: 'purple',
+            customAccentHex: '#c058ff',
+            aiService: 'gemini',
+            scheduleView: 'bells',
+            animPreset: 'cinematic',
+            soundFx: true,
+            auraStyle: 'dynamic'
+        };
+
+        try {
+            const raw = localStorage.getItem('nextgen_settings_v2');
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (parsed && typeof parsed === 'object') {
+                    return Object.assign({}, defaults, parsed);
+                }
+            }
+        } catch (_) {}
+
+        try {
+            const pLvl = localStorage.getItem('nextgen_perf_level');
+            if (pLvl !== null) defaults.perfLevel = Math.max(0, Math.min(2, parseInt(pLvl, 10) || 0));
+            else if (localStorage.getItem('nextgen_perf_mode') === 'true') defaults.perfLevel = 1;
+
+            const bStr = parseFloat(localStorage.getItem('nextgen_blur_strength'));
+            if (!isNaN(bStr) && bStr >= 1 && bStr <= 7) defaults.motionBlurStrength = bStr;
+
+            const tMode = localStorage.getItem('nextgen_tilt_mode');
+            if (tMode !== null) defaults.tiltMode = tMode === 'true';
+
+            const hMode = localStorage.getItem('nextgen_haptic_mode');
+            if (hMode !== null) defaults.hapticMode = hMode === 'true';
+
+            const tmDisplay = localStorage.getItem('nextgen_timer_display');
+            if (tmDisplay !== null) defaults.timerDisplay = tmDisplay === 'true';
+
+            const accCol = localStorage.getItem('nextgen_accent_color');
+            if (accCol && (ACCENT_PALETTE[accCol] || accCol === 'custom')) defaults.accentColor = accCol;
+
+            const cHex = localStorage.getItem('nextgen_custom_hex');
+            if (cHex) defaults.customAccentHex = cHex;
+
+            const aiServ = localStorage.getItem('nextgen_ai_service');
+            if (aiServ && AI_SERVICES[aiServ]) defaults.aiService = aiServ;
+
+            const sView = localStorage.getItem('nextgen_schedule_view');
+            if (sView === 'bells' || sView === 'lessons') defaults.scheduleView = sView;
+
+            const aPreset = localStorage.getItem('nextgen_anim_preset');
+            if (aPreset && ANIM_PRESETS[aPreset]) defaults.animPreset = aPreset;
+
+            const sFx = localStorage.getItem('nextgen_sound_fx');
+            if (sFx !== null) defaults.soundFx = sFx === 'true';
+
+            const aura = localStorage.getItem('nextgen_aura_style');
+            if (aura && AURA_DESCS[aura]) defaults.auraStyle = aura;
+            else defaults.auraStyle = 'dynamic';
+        } catch (_) {}
+
+        return defaults;
+    }
+
+    window.settingsState = readStoredSettings();
+
+    let persistTimer = null;
+    function persistSettings(immediate = false) {
+        if (immediate) {
+            doPersist();
+            return;
+        }
+        if (persistTimer) clearTimeout(persistTimer);
+        persistTimer = setTimeout(doPersist, 120);
+    }
+
+    function doPersist() {
+        try {
+            localStorage.setItem('nextgen_settings_v2', JSON.stringify(window.settingsState));
+            localStorage.setItem('nextgen_perf_level', String(window.settingsState.perfLevel));
+            localStorage.setItem('nextgen_perf_mode', window.settingsState.perfLevel > 0 ? 'true' : 'false');
+            localStorage.setItem('nextgen_blur_strength', window.settingsState.motionBlurStrength.toFixed(1));
+            localStorage.setItem('nextgen_tilt_mode', String(window.settingsState.tiltMode));
+            localStorage.setItem('nextgen_haptic_mode', String(window.settingsState.hapticMode));
+            localStorage.setItem('nextgen_timer_display', String(window.settingsState.timerDisplay));
+            localStorage.setItem('nextgen_accent_color', window.settingsState.accentColor);
+            localStorage.setItem('nextgen_custom_hex', window.settingsState.customAccentHex || '#c058ff');
+            localStorage.setItem('nextgen_ai_service', window.settingsState.aiService);
+            localStorage.setItem('nextgen_schedule_view', window.settingsState.scheduleView || 'bells');
+            localStorage.setItem('nextgen_anim_preset', window.settingsState.animPreset || 'cinematic');
+            localStorage.setItem('nextgen_sound_fx', String(window.settingsState.soundFx));
+            localStorage.setItem('nextgen_aura_style', window.settingsState.auraStyle || 'dynamic');
+        } catch (_) {}
+    }
+
+    // Instant CSS injection upon launch
+    const initialConfig = getAccentConfig(window.settingsState);
+    const initialAura = getAuraConfig(window.settingsState);
+    document.documentElement.style.setProperty('--purple-accent', initialConfig.accent);
+    document.documentElement.style.setProperty('--purple-glow', initialConfig.glow);
+    document.documentElement.style.setProperty('--aura-glow-1', initialAura.glow1);
+    document.documentElement.style.setProperty('--aura-glow-2', initialAura.glow2);
+    document.documentElement.style.setProperty('--hero-reflection-color', initialAura.reflection);
+    document.documentElement.style.setProperty('--motion-blur-val', `${window.settingsState.motionBlurStrength}px`);
+    document.body.setAttribute('data-perf-level', String(window.settingsState.perfLevel));
+    document.body.classList.toggle('perf-mode', window.settingsState.perfLevel > 0);
+    document.body.setAttribute('data-aura', window.settingsState.auraStyle || 'dynamic');
+
+    // ==========================================================================
+    // 1. LENIS SMOOTH SCROLL (STUDIO FREIGHT / DARKROOM ENGINEERING)
+    // ==========================================================================
+    let lenis = null;
+    const mainContent = document.getElementById('mainContent') || document.querySelector('.main-content');
+    let currentScrollBlur = 0;
+    let lastNativeScrollY = window.scrollY || 0;
+    let lastNativeScrollTime = performance.now();
+    let nativeVelocity = 0;
+
+    window.addEventListener('scroll', () => {
+        const now = performance.now();
+        const dt = Math.max(8, now - lastNativeScrollTime);
+        const dy = (window.scrollY || 0) - lastNativeScrollY;
+        lastNativeScrollY = window.scrollY || 0;
+        lastNativeScrollTime = now;
+        nativeVelocity = (dy / dt) * 16.6;
+    }, { passive: true });
+
+    function updateScrollMotionBlur() {
+        if (!mainContent) return;
+        const isQuality = (window.settingsState?.perfLevel ?? 0) === 0;
+        if (!isQuality || modalState !== 'closed') {
+            if (currentScrollBlur !== 0) {
+                currentScrollBlur = 0;
+                mainContent.style.filter = '';
+            }
+            return;
+        }
+
+        const vel = lenis ? Math.abs(lenis.velocity || 0) : Math.abs(nativeVelocity);
+        if (!lenis) nativeVelocity *= 0.88;
+
+        if (vel < 0.8) {
+            if (currentScrollBlur !== 0) {
+                currentScrollBlur = 0;
+                mainContent.style.filter = '';
+            }
+            return;
+        }
+
+        const strength = window.settingsState?.motionBlurStrength ?? 3.0;
+        const targetBlur = Math.min(4.5, (vel / 2.5) * (strength / 3.0));
+        currentScrollBlur += (targetBlur - currentScrollBlur) * 0.35;
+
+        if (currentScrollBlur > 0.5) {
+            mainContent.style.filter = `blur(${currentScrollBlur.toFixed(1)}px)`;
+        } else if (currentScrollBlur !== 0) {
+            currentScrollBlur = 0;
+            mainContent.style.filter = '';
+        }
+    }
+
+    try {
+        if (typeof Lenis !== 'undefined') {
+            lenis = new Lenis({
+                duration: 1.15,
+                easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+                orientation: 'vertical',
+                gestureOrientation: 'vertical',
+                smoothWheel: true,
+                wheelMultiplier: 1.0,
+                touchMultiplier: 1.2,
+                infinite: false
+            });
+
+            window.lenis = lenis;
+
+            function lenisRaf(time) {
+                lenis.raf(time);
+                updateScrollMotionBlur();
+                requestAnimationFrame(lenisRaf);
+            }
+            requestAnimationFrame(lenisRaf);
+        } else {
+            function nativeScrollRaf() {
+                updateScrollMotionBlur();
+                requestAnimationFrame(nativeScrollRaf);
+            }
+            requestAnimationFrame(nativeScrollRaf);
+        }
+    } catch (e) {
+        console.warn('Lenis smooth scroll init failed:', e);
+    }
+
     // ==========================================================================
     // 1. iOS SPRING PHYSICS ENGINE
     // ==========================================================================
@@ -92,18 +492,274 @@ document.addEventListener('DOMContentLoaded', () => {
     const wrapBells = document.getElementById('wrapBells');
     const wrapLessons = document.getElementById('wrapLessons');
 
+    // ==========================================================================
+    // DYNAMIC ISLAND FLUID DROPLET ANIMATION ENGINE FOR NAV MODALS
+    // (Розклад, Калькулятор, ІІ, Тривога)
+    // ==========================================================================
+    let navModalTransitionId = 0;
+    let activeNavModalTimer = null;
+
+    function openDynamicIslandModal(backdrop, container, triggerTab) {
+        if (!backdrop || !container) return;
+
+        const thisTransition = ++navModalTransitionId;
+        if (activeNavModalTimer) {
+            clearTimeout(activeNavModalTimer);
+            activeNavModalTimer = null;
+        }
+
+        // Cancel previous animations on all nav modal containers
+        const allNavContainers = document.querySelectorAll('.schedule-modal-container, .calc-modal-container, .alarm-modal-container, .ai-modal-container');
+        allNavContainers.forEach(c => {
+            c.getAnimations().forEach(a => a.cancel());
+            Array.from(c.children).forEach(child => child.getAnimations().forEach(a => a.cancel()));
+        });
+
+        // Close any other open backdrops immediately
+        const otherBackdrops = [scheduleModalBackdrop, calcModalBackdrop, alarmModalBackdrop, aiModalBackdrop, settingsModalBackdrop, modalBackdrop];
+        otherBackdrops.forEach(b => {
+            if (b && b !== backdrop && b.classList.contains('is-open')) {
+                b.classList.remove('is-open', 'is-closing');
+                b.setAttribute('aria-hidden', 'true');
+            }
+        });
+
+        window.lenis?.stop();
+
+        playTapticAudio('open');
+        if (window.settingsState?.hapticMode !== false && 'vibrate' in navigator) {
+            try { navigator.vibrate(10); } catch (_) {}
+        }
+
+        backdrop.classList.remove('is-closing');
+        backdrop.classList.add('is-open');
+        backdrop.setAttribute('aria-hidden', 'false');
+
+        // Measure live screen geometry
+        const tab = triggerTab || document.querySelector('.nav-capsule');
+        const tabRect = tab ? tab.getBoundingClientRect() : { left: window.innerWidth / 2 - 50, top: 20, width: 100, height: 36 };
+        const targetRect = container.getBoundingClientRect();
+
+        const tabCenterX = tabRect.left + tabRect.width / 2;
+        const tabCenterY = tabRect.top + tabRect.height / 2;
+        const targetCenterX = targetRect.left + targetRect.width / 2;
+        const targetCenterY = targetRect.top + targetRect.height / 2;
+
+        const dx = tabCenterX - targetCenterX;
+        const dy = tabCenterY - targetCenterY;
+        const sx = Math.max(0.08, tabRect.width / targetRect.width);
+        const sy = Math.max(0.04, tabRect.height / targetRect.height);
+
+        const isMobile = window.innerWidth <= 768;
+        const targetRadius = isMobile ? 22 : 26;
+
+        const hasMotionBlur = (window.settingsState?.perfLevel ?? 0) === 0;
+        const blurStrength = window.settingsState?.motionBlurStrength ?? 3.0;
+        const peakBlur = blurStrength * 2.0;
+
+        // CINEMATIC APPLE SPRING BLOOM (2 keyframes, zero hitch, authentic elastic micro-overshoot)
+        const dropletKeyframes = [
+            {
+                transform: `translate3d(${dx.toFixed(1)}px, ${dy.toFixed(1)}px, 0) scale(${sx.toFixed(4)}, ${sy.toFixed(4)})`,
+                borderRadius: '24px',
+                opacity: 0.65,
+                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 rgba(192, 88, 255, 0)',
+                offset: 0
+            },
+            {
+                transform: 'translate3d(0, 0, 0) scale(1, 1)',
+                borderRadius: `${targetRadius}px`,
+                opacity: 1,
+                boxShadow: '0 32px 80px -12px rgba(0, 0, 0, 0.75), 0 0 45px var(--purple-glow, rgba(192, 88, 255, 0.35))',
+                offset: 1
+            }
+        ];
+
+        const curPreset = ANIM_PRESETS[window.settingsState?.animPreset] || ANIM_PRESETS.cinematic;
+        const duration = isMobile ? curPreset.openMobileDur : curPreset.openDur;
+        const easing = curPreset.openEase;
+
+        const anim = container.animate(dropletKeyframes, { duration, easing, fill: 'forwards' });
+
+        // Soft Cinema Motion Blur Track
+        if (hasMotionBlur) {
+            container.animate([
+                { filter: 'blur(0px)' },
+                { filter: `blur(${peakBlur.toFixed(1)}px)`, offset: 0.32 },
+                { filter: 'blur(0px)', offset: 1 }
+            ], { duration, easing: 'ease-out' });
+        }
+
+        // STAGGERED CINEMATIC CONTENT CASCADE
+        const header = container.querySelector('.schedule-modal-header, .calc-modal-header, .alarm-modal-header, .ai-modal-header');
+        const body = container.querySelector('.schedule-modal-body, .calc-body, .alarm-modal-body, .ai-modal-body, .calc-result-area, .ai-modal-frame-wrap');
+
+        if (header) {
+            header.animate([
+                { opacity: 0, transform: 'translate3d(0, -12px, 0) scale(0.97)', offset: 0 },
+                { opacity: 0, transform: 'translate3d(0, -10px, 0) scale(0.97)', offset: 0.15 },
+                { opacity: 1, transform: 'translate3d(0, 0, 0) scale(1)', offset: 1 }
+            ], { duration: Math.round(duration * 0.88), easing: 'cubic-bezier(0.2, 0.9, 0.3, 1)', fill: 'forwards' });
+        }
+
+        if (body) {
+            body.animate([
+                { opacity: 0, transform: 'translate3d(0, 16px, 0) scale(0.96)', offset: 0 },
+                { opacity: 0, transform: 'translate3d(0, 14px, 0) scale(0.96)', offset: 0.22 },
+                { opacity: 1, transform: 'translate3d(0, 0, 0) scale(1)', offset: 1 }
+            ], { duration: Math.round(duration * 0.92), easing: 'cubic-bezier(0.2, 0.9, 0.3, 1)', fill: 'forwards' });
+        }
+
+        Array.from(container.children).forEach(child => {
+            if (child !== header && child !== body) {
+                child.animate([
+                    { opacity: 0, transform: 'scale(0.96)', offset: 0 },
+                    { opacity: 1, transform: 'scale(1)', offset: 1 }
+                ], { duration: Math.round(duration * 0.82), easing: 'ease-out', fill: 'forwards' });
+            }
+        });
+
+        anim.onfinish = () => {
+            if (thisTransition === navModalTransitionId) {
+                container.style.transform = 'none';
+            }
+        };
+    }
+
+    function closeDynamicIslandModal(backdrop, container, triggerTab, onFinish) {
+        if (!backdrop || !container || !backdrop.classList.contains('is-open')) return;
+
+        const thisTransition = ++navModalTransitionId;
+        if (activeNavModalTimer) {
+            clearTimeout(activeNavModalTimer);
+            activeNavModalTimer = null;
+        }
+
+        playTapticAudio('close');
+        container.getAnimations().forEach(a => a.cancel());
+        Array.from(container.children).forEach(child => child.getAnimations().forEach(a => a.cancel()));
+
+        // Release pointer events immediately so clicks during closing pass straight to buttons
+        backdrop.classList.add('is-closing');
+
+        const tab = triggerTab || document.querySelector('.nav-capsule');
+        const tabRect = tab ? tab.getBoundingClientRect() : { left: window.innerWidth / 2 - 50, top: 20, width: 100, height: 36 };
+        const targetRect = container.getBoundingClientRect();
+
+        const tabCenterX = tabRect.left + tabRect.width / 2;
+        const tabCenterY = tabRect.top + tabRect.height / 2;
+        const targetCenterX = targetRect.left + targetRect.width / 2;
+        const targetCenterY = targetRect.top + targetRect.height / 2;
+
+        const dx = tabCenterX - targetCenterX;
+        const dy = tabCenterY - targetCenterY;
+        const sx = Math.max(0.08, tabRect.width / targetRect.width);
+        const sy = Math.max(0.04, tabRect.height / targetRect.height);
+
+        const isMobile = window.innerWidth <= 768;
+        const curPreset = ANIM_PRESETS[window.settingsState?.animPreset] || ANIM_PRESETS.cinematic;
+        const duration = isMobile ? curPreset.closeMobileDur : curPreset.closeDur;
+        const easing = curPreset.closeEase;
+
+        const hasMotionBlur = (window.settingsState?.perfLevel ?? 0) === 0;
+        const blurStrength = window.settingsState?.motionBlurStrength ?? 3.0;
+
+        // Pure 2-keyframe reverse retraction into the navigation tab
+        const shrinkKeyframes = [
+            {
+                transform: 'translate3d(0, 0, 0) scale(1, 1)',
+                borderRadius: `${isMobile ? 22 : 26}px`,
+                opacity: 1,
+                offset: 0
+            },
+            {
+                transform: `translate3d(${dx.toFixed(1)}px, ${dy.toFixed(1)}px, 0) scale(${sx.toFixed(4)}, ${sy.toFixed(4)})`,
+                borderRadius: '24px',
+                opacity: 0,
+                offset: 1
+            }
+        ];
+
+        const anim = container.animate(shrinkKeyframes, { duration, easing, fill: 'forwards' });
+
+        if (hasMotionBlur) {
+            container.animate([
+                { filter: 'blur(0px)' },
+                { filter: `blur(${(blurStrength * 1.5).toFixed(1)}px)`, offset: 0.35 },
+                { filter: 'blur(0px)', offset: 1 }
+            ], { duration, easing: 'ease-out' });
+        }
+
+        // Fade out inner content quickly
+        Array.from(container.children).forEach(child => {
+            child.animate([
+                { opacity: 1, transform: 'scale(1)' },
+                { opacity: 0, transform: 'scale(0.96)' }
+            ], { duration: Math.min(120, duration), easing: 'ease-out', fill: 'forwards' });
+        });
+
+        let finished = false;
+        const finish = () => {
+            if (finished || thisTransition !== navModalTransitionId) return;
+            finished = true;
+            activeNavModalTimer = null;
+            backdrop.classList.remove('is-open', 'is-closing');
+            backdrop.setAttribute('aria-hidden', 'true');
+            container.style.transform = 'none';
+            window.lenis?.start();
+            if (typeof onFinish === 'function') onFinish();
+        };
+
+        anim.onfinish = finish;
+        activeNavModalTimer = setTimeout(finish, duration + 20);
+    }
+
+    function closeAllModals() {
+        navModalTransitionId++;
+        if (activeNavModalTimer) {
+            clearTimeout(activeNavModalTimer);
+            activeNavModalTimer = null;
+        }
+        const modalConfigs = [
+            { id: 'scheduleModalBackdrop', contId: 'scheduleModalContainer' },
+            { id: 'calcModalBackdrop', contId: 'calcModalContainer' },
+            { id: 'alarmModalBackdrop', contId: 'alarmModalContainer' },
+            { id: 'aiModalBackdrop', contId: 'aiModalContainer' },
+            { id: 'settingsModalBackdrop', contId: 'settingsModalContainer' },
+            { id: 'splitModalBackdrop', contId: 'splitModalContainer' },
+            { id: 'modalBackdrop', contId: 'modalContainer' }
+        ];
+        modalConfigs.forEach(({ id, contId }) => {
+            const el = document.getElementById(id);
+            if (el && el.classList.contains('is-open')) {
+                el.classList.remove('is-open', 'is-closing');
+                el.setAttribute('aria-hidden', 'true');
+                const cont = document.getElementById(contId);
+                if (cont) {
+                    cont.getAnimations().forEach(a => a.cancel());
+                    cont.style.transform = 'none';
+                    Array.from(cont.children).forEach(child => child.getAnimations().forEach(a => a.cancel()));
+                }
+            }
+        });
+        window.lenis?.start();
+    }
+
+    const scheduleModalContainer = document.getElementById('scheduleModalContainer');
+
     function openScheduleModal() {
-        if (!scheduleModalBackdrop) return;
-        scheduleModalBackdrop.classList.add('is-open');
-        scheduleModalBackdrop.setAttribute('aria-hidden', 'false');
+        if (!scheduleModalBackdrop || !scheduleModalContainer) return;
+        const tab = document.querySelector('.nav-tab[data-tab="schedule"]');
+        openDynamicIslandModal(scheduleModalBackdrop, scheduleModalContainer, tab);
     }
 
     function closeScheduleModal() {
-        if (!scheduleModalBackdrop) return;
-        scheduleModalBackdrop.classList.remove('is-open');
-        scheduleModalBackdrop.setAttribute('aria-hidden', 'true');
-        const gdzTab = document.querySelector('.nav-tab[data-tab="gdz"]');
-        if (gdzTab) selectTab(gdzTab, false);
+        if (!scheduleModalBackdrop || !scheduleModalContainer) return;
+        const tab = document.querySelector('.nav-tab[data-tab="schedule"]');
+        closeDynamicIslandModal(scheduleModalBackdrop, scheduleModalContainer, tab, () => {
+            const gdzTab = document.querySelector('.nav-tab[data-tab="gdz"]');
+            if (gdzTab) selectTab(gdzTab, false);
+        });
     }
 
     function switchScheduleView(view) {
@@ -118,7 +774,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (wrapLessons) wrapLessons.classList.add('active');
             if (wrapBells) wrapBells.classList.remove('active');
         }
+        if (window.settingsState) {
+            window.settingsState.scheduleView = view;
+            persistSettings();
+        }
     }
+
+    // Restore saved schedule view
+    switchScheduleView(window.settingsState?.scheduleView || 'bells');
 
     if (segBtnBells && segBtnLessons) {
         segBtnBells.addEventListener('click', () => switchScheduleView('bells'));
@@ -137,10 +800,84 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Air Raid Alarm Modal Controls
+    const alarmModalBackdrop = document.getElementById('alarmModalBackdrop');
+    const alarmModalContainer = document.getElementById('alarmModalContainer');
+    const alarmModalCloseBtn = document.getElementById('alarmModalCloseBtn');
+
+    function openAlarmModal() {
+        if (!alarmModalBackdrop || !alarmModalContainer) return;
+        const tab = document.querySelector('.nav-tab[data-tab="alarm"]');
+        openDynamicIslandModal(alarmModalBackdrop, alarmModalContainer, tab);
+    }
+
+    function closeAlarmModal() {
+        if (!alarmModalBackdrop || !alarmModalContainer) return;
+        const tab = document.querySelector('.nav-tab[data-tab="alarm"]');
+        closeDynamicIslandModal(alarmModalBackdrop, alarmModalContainer, tab, () => {
+            const gdzTab = document.querySelector('.nav-tab[data-tab="gdz"]');
+            if (gdzTab) selectTab(gdzTab, false);
+        });
+    }
+
+    if (alarmModalCloseBtn) {
+        alarmModalCloseBtn.addEventListener('click', closeAlarmModal);
+    }
+
+    if (alarmModalBackdrop) {
+        alarmModalBackdrop.addEventListener('click', (e) => {
+            if (e.target === alarmModalBackdrop) {
+                closeAlarmModal();
+            }
+        });
+    }
+
+    // AI Assistant Modal Controls (Live Embedded Iframe)
+    const aiModalBackdrop = document.getElementById('aiModalBackdrop');
+    const aiModalContainer = document.getElementById('aiModalContainer');
+    const aiModalCloseBtn = document.getElementById('aiModalCloseBtn');
+    const aiQuickSelector = document.getElementById('aiQuickSelector');
+
+    function openAiModal() {
+        if (!aiModalBackdrop || !aiModalContainer) return;
+        const tab = document.querySelector('.nav-tab[data-tab="ai"]');
+        openDynamicIslandModal(aiModalBackdrop, aiModalContainer, tab);
+    }
+
+    function closeAiModal() {
+        if (!aiModalBackdrop || !aiModalContainer) return;
+        const tab = document.querySelector('.nav-tab[data-tab="ai"]');
+        closeDynamicIslandModal(aiModalBackdrop, aiModalContainer, tab, () => {
+            const gdzTab = document.querySelector('.nav-tab[data-tab="gdz"]');
+            if (gdzTab) selectTab(gdzTab, false);
+        });
+    }
+
+    if (aiModalCloseBtn) {
+        aiModalCloseBtn.addEventListener('click', closeAiModal);
+    }
+
+    if (aiModalBackdrop) {
+        aiModalBackdrop.addEventListener('click', (e) => {
+            if (e.target === aiModalBackdrop) {
+                closeAiModal();
+            }
+        });
+    }
+
+    if (aiQuickSelector) {
+        aiQuickSelector.addEventListener('change', (e) => {
+            if (typeof setAiService === 'function') {
+                setAiService(e.target.value);
+            }
+        });
+    }
+
     // ==========================================================================
     // COLUMN CALCULATOR MODAL
     // ==========================================================================
     const calcModalBackdrop = document.getElementById('calcModalBackdrop');
+    const calcModalContainer = document.getElementById('calcModalContainer');
     const calcModalCloseBtn = document.getElementById('calcModalCloseBtn');
     const calcSolveBtn = document.getElementById('calcSolveBtn');
     const calcNum1 = document.getElementById('calcNum1');
@@ -150,18 +887,19 @@ document.addEventListener('DOMContentLoaded', () => {
     let calcOp = '+';
 
     function openCalcModal() {
-        if (!calcModalBackdrop) return;
-        calcModalBackdrop.classList.add('is-open');
-        calcModalBackdrop.setAttribute('aria-hidden', 'false');
-        if (calcNum1) calcNum1.focus();
+        if (!calcModalBackdrop || !calcModalContainer) return;
+        const tab = document.querySelector('.nav-tab[data-tab="calc"]');
+        openDynamicIslandModal(calcModalBackdrop, calcModalContainer, tab);
+        if (calcNum1) setTimeout(() => calcNum1.focus(), 250);
     }
 
     function closeCalcModal() {
-        if (!calcModalBackdrop) return;
-        calcModalBackdrop.classList.remove('is-open');
-        calcModalBackdrop.setAttribute('aria-hidden', 'true');
-        const gdzTab = document.querySelector('.nav-tab[data-tab="gdz"]');
-        if (gdzTab) selectTab(gdzTab, false);
+        if (!calcModalBackdrop || !calcModalContainer) return;
+        const tab = document.querySelector('.nav-tab[data-tab="calc"]');
+        closeDynamicIslandModal(calcModalBackdrop, calcModalContainer, tab, () => {
+            const gdzTab = document.querySelector('.nav-tab[data-tab="gdz"]');
+            if (gdzTab) selectTab(gdzTab, false);
+        });
     }
 
     calcOpBtns.forEach(btn => {
@@ -182,11 +920,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Allow only numbers, minus, dot, comma in inputs
+    // Allow only numbers, minus, dot, comma in inputs + Enter key to solve
     [calcNum1, calcNum2].forEach(inp => {
         if (!inp) return;
         inp.addEventListener('input', () => {
-            inp.value = inp.value.replace(/[^0-9.,-]/g, '').replace(',', '.');
+            let val = inp.value.replace(/[^0-9.,-]/g, '').replace(',', '.');
+            const parts = val.split('.');
+            if (parts.length > 2) {
+                val = parts[0] + '.' + parts.slice(1).join('');
+            }
+            if (val.indexOf('-') > 0) {
+                val = (val.startsWith('-') ? '-' : '') + val.replace(/-/g, '');
+            }
+            inp.value = val;
+        });
+
+        inp.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (calcSolveBtn) calcSolveBtn.click();
+            }
         });
     });
 
@@ -198,14 +951,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // ---- Column arithmetic renderers ----
 
     function padLeft(str, len) {
-        while (str.length < len) str = ' ' + str;
-        return str;
+        let s = String(str);
+        while (s.length < len) s = ' ' + s;
+        return s;
     }
 
     function renderAddSub(a, b, op) {
         const isAdd = op === '+';
         const sign = isAdd ? '+' : '−';
-        const result = isAdd ? a + b : a - b;
+        const rawResult = isAdd ? a + b : a - b;
+        // Clean floating point micro-inaccuracies (0.1 + 0.2 = 0.3)
+        const result = parseFloat(rawResult.toFixed(10));
 
         const aStr = String(a);
         const bStr = String(b);
@@ -224,46 +980,65 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderMultiplication(a, b) {
-        const result = a * b;
-        const aStr = String(Math.abs(a));
-        const bStr = String(Math.abs(b));
-        const rStr = String(Math.abs(result));
+        const rawResult = a * b;
+        const result = parseFloat(rawResult.toFixed(10));
+        const absA = Math.abs(a);
+        const absB = Math.abs(b);
         const isNeg = (a < 0) !== (b < 0);
 
+        // Check if numbers have decimals
+        const aDec = (String(absA).split('.')[1] || '').length;
+        const bDec = (String(absB).split('.')[1] || '').length;
+        const totalDec = aDec + bDec;
+
+        // Integer scaling for classical column multiplication
+        const intA = Math.round(absA * Math.pow(10, aDec));
+        const intB = Math.round(absB * Math.pow(10, bDec));
+
+        const aDisplay = String(absA);
+        const bDisplay = String(absB);
+        const intBStr = String(intB);
+
         const partials = [];
-        for (let i = bStr.length - 1; i >= 0; i--) {
-            const digit = parseInt(bStr[i]);
-            const partial = Math.abs(a) * digit;
-            const shift = bStr.length - 1 - i;
+        for (let i = intBStr.length - 1; i >= 0; i--) {
+            const digit = parseInt(intBStr[i], 10);
+            const partial = intA * digit;
+            const shift = intBStr.length - 1 - i;
             partials.push({ value: partial, shift });
         }
 
-        const maxLen = Math.max(aStr.length, bStr.length, rStr.length, ...partials.map(p => String(p.value).length + p.shift)) + 2;
+        const maxLen = Math.max(
+            aDisplay.length,
+            bDisplay.length,
+            String(Math.abs(result)).length,
+            ...partials.map(p => String(p.value).length + p.shift)
+        ) + 2;
 
         let html = '<div class="calc-column-work">';
-        html += `<div class="calc-row">${padLeft(aStr, maxLen)}</div>`;
-        html += `<div class="calc-row"><span class="calc-op-sign">×</span>${padLeft(bStr, maxLen - 2)}</div>`;
+        html += `<div class="calc-row">${padLeft(aDisplay, maxLen)}</div>`;
+        html += `<div class="calc-row"><span class="calc-op-sign">×</span>${padLeft(bDisplay, maxLen - 2)}</div>`;
         html += '<div class="calc-line"></div>';
 
-        if (bStr.length === 1) {
-            // Single digit — just show result
-            html += `<div class="calc-row calc-result-row">${padLeft((isNeg ? '-' : '') + rStr, maxLen)}</div>`;
+        if (intBStr.length === 1) {
+            html += `<div class="calc-row calc-result-row">${padLeft((isNeg ? '-' : '') + String(Math.abs(result)), maxLen)}</div>`;
         } else {
-            // Show partial products
-            partials.forEach((p, idx) => {
+            partials.forEach((p) => {
                 const pStr = String(p.value) + '0'.repeat(p.shift);
-                const cls = idx === partials.length - 1 ? '' : '';
-                html += `<div class="calc-row ${cls}">${padLeft(pStr, maxLen)}</div>`;
+                html += `<div class="calc-row">${padLeft(pStr, maxLen)}</div>`;
             });
 
             if (partials.length > 1) {
                 html += '<div class="calc-line"></div>';
-                html += `<div class="calc-row calc-result-row">${padLeft((isNeg ? '-' : '') + rStr, maxLen)}</div>`;
+                html += `<div class="calc-row calc-result-row">${padLeft((isNeg ? '-' : '') + String(Math.abs(result)), maxLen)}</div>`;
             }
         }
 
         html += '</div>';
-        html += `<div class="calc-final-answer">Відповідь: <strong>${result}</strong></div>`;
+        if (totalDec > 0) {
+            html += `<div class="calc-final-answer">Відповідь: <strong>${result}</strong> (відокремлено знаків: <strong>${totalDec}</strong>)</div>`;
+        } else {
+            html += `<div class="calc-final-answer">Відповідь: <strong>${result}</strong></div>`;
+        }
         return html;
     }
 
@@ -272,43 +1047,49 @@ document.addEventListener('DOMContentLoaded', () => {
             return '<div class="calc-final-answer">На нуль ділити не можна!</div>';
         }
 
-        const result = a / b;
+        const rawResult = a / b;
+        const result = parseFloat(rawResult.toFixed(10));
         const isInteger = Number.isInteger(result);
         const absA = Math.abs(a);
         const absB = Math.abs(b);
         const isNeg = (a < 0) !== (b < 0);
 
-        // Long division step by step
-        const aStr = String(absA);
+        // Scale decimals to integers if needed
+        const aDec = (String(absA).split('.')[1] || '').length;
+        const bDec = (String(absB).split('.')[1] || '').length;
+        const maxDec = Math.max(aDec, bDec);
+        const scale = Math.pow(10, maxDec);
+        const intA = Math.round(absA * scale);
+        const intB = Math.round(absB * scale);
+
+        const aStr = String(intA);
         const steps = [];
         let remainder = 0;
         let quotient = '';
         let started = false;
 
         for (let i = 0; i < aStr.length; i++) {
-            remainder = remainder * 10 + parseInt(aStr[i]);
-            const q = Math.floor(remainder / absB);
+            remainder = remainder * 10 + parseInt(aStr[i], 10);
+            const q = Math.floor(remainder / intB);
             if (q > 0 || started) {
                 started = true;
                 quotient += q;
             } else {
                 quotient += '0';
             }
-            steps.push({ dividend: remainder, quotientDigit: q, remainder: remainder - q * absB });
-            remainder = remainder - q * absB;
+            steps.push({ dividend: remainder, quotientDigit: q, remainder: remainder - q * intB });
+            remainder = remainder - q * intB;
         }
 
-        // Clean leading zeros
         quotient = quotient.replace(/^0+/, '') || '0';
 
         let html = '<div class="calc-column-work">';
-        html += `<div class="calc-row" style="justify-content:flex-start"><span style="margin-right:12px">${aStr}</span>│<span style="margin-left:6px; border-bottom:2px solid rgba(255,255,255,0.5); padding-bottom:2px">${absB}</span></div>`;
+        html += `<div class="calc-row" style="justify-content:flex-start"><span style="margin-right:12px">${absA}</span>│<span style="margin-left:6px; border-bottom:2px solid rgba(255,255,255,0.5); padding-bottom:2px">${absB}</span></div>`;
         
-        // Show steps
         let indent = 0;
         steps.forEach((step, idx) => {
             if (step.quotientDigit > 0 || idx > 0) {
-                const sub = step.quotientDigit * absB;
+                const sub = step.quotientDigit * intB;
                 if (sub > 0) {
                     const spaces = ' '.repeat(indent);
                     html += `<div class="calc-row" style="justify-content:flex-start">${spaces}<span style="color:rgba(255,255,255,0.5)">-${sub}</span></div>`;
@@ -324,9 +1105,9 @@ document.addEventListener('DOMContentLoaded', () => {
         html += '</div>';
 
         if (isInteger) {
-            html += `<div class="calc-final-answer">Відповідь: <strong>${isNeg ? '-' : ''}${quotient}</strong></div>`;
+            html += `<div class="calc-final-answer">Відповідь: <strong>${isNeg ? '-' : ''}${result}</strong></div>`;
         } else {
-            html += `<div class="calc-final-answer">Відповідь: <strong>${(Math.round(result * 10000) / 10000)}</strong> (остача: <strong>${remainder}</strong>)</div>`;
+            html += `<div class="calc-final-answer">Відповідь: <strong>${isNeg ? '-' : ''}${result}</strong> (округлено: <strong>${(Math.round(result * 10000) / 10000)}</strong>)</div>`;
         }
         return html;
     }
@@ -350,12 +1131,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Escape key closes calc modal too
-    window.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && calcModalBackdrop?.classList.contains('is-open')) {
-            closeCalcModal();
-        }
-    });
 
     // ==========================================================================
     // PRESS-AND-HOLD ZOOM FOR SCHEDULE IMAGES (1-2 SEC DELAY ON MOBILE)
@@ -465,7 +1240,23 @@ document.addEventListener('DOMContentLoaded', () => {
         img.addEventListener('lostpointercapture', endZoom);
     });
 
+    let toastTimer = null;
+    function showToast(message, icon = '💬') {
+        const toast = document.getElementById('glassToast');
+        const toastMsg = document.getElementById('toastMessage');
+        const toastIcon = document.getElementById('toastIcon');
+        if (!toast) return;
+        if (toastMsg) toastMsg.textContent = message;
+        if (toastIcon) toastIcon.textContent = icon;
+        toast.classList.add('is-visible');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+            toast.classList.remove('is-visible');
+        }, 2600);
+    }
+
     function selectTab(tab, triggerAction = true) {
+        playTapticAudio('click');
         navTabs.forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
         springX.setTarget(tab.offsetLeft);
@@ -477,11 +1268,45 @@ document.addEventListener('DOMContentLoaded', () => {
         if (triggerAction) {
             const tabType = tab.getAttribute('data-tab');
             if (tabType === 'schedule') {
-                openScheduleModal();
+                if (scheduleModalBackdrop && scheduleModalBackdrop.classList.contains('is-open') && !scheduleModalBackdrop.classList.contains('is-closing')) {
+                    closeScheduleModal();
+                } else {
+                    openScheduleModal();
+                }
             } else if (tabType === 'calc') {
-                openCalcModal();
+                if (calcModalBackdrop && calcModalBackdrop.classList.contains('is-open') && !calcModalBackdrop.classList.contains('is-closing')) {
+                    closeCalcModal();
+                } else {
+                    openCalcModal();
+                }
+            } else if (tabType === 'ai') {
+                if (aiModalBackdrop && aiModalBackdrop.classList.contains('is-open') && !aiModalBackdrop.classList.contains('is-closing')) {
+                    closeAiModal();
+                } else {
+                    openAiModal();
+                }
+            } else if (tabType === 'alarm') {
+                if (alarmModalBackdrop && alarmModalBackdrop.classList.contains('is-open') && !alarmModalBackdrop.classList.contains('is-closing')) {
+                    closeAlarmModal();
+                } else {
+                    openAlarmModal();
+                }
+            } else if (tabType === 'forum') {
+                closeAllModals();
+                showToast('Розділ «Форум» незабаром буде доступний 💬', '🚀');
+                setTimeout(() => {
+                    const gdzTab = document.querySelector('.nav-tab[data-tab="gdz"]');
+                    if (gdzTab) selectTab(gdzTab, false);
+                }, 1300);
             } else if (tabType === 'gdz') {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                closeAllModals();
+                if ((window.scrollY || window.pageYOffset || 0) > 20) {
+                    if (window.lenis) {
+                        window.lenis.scrollTo(0, { duration: 0.35 });
+                    } else {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                }
             }
         }
     }
@@ -510,9 +1335,10 @@ document.addEventListener('DOMContentLoaded', () => {
         card._initialized = true;
 
         let hovered = false, tgtRX = 0, tgtRY = 0, curRX = 0, curRY = 0, cAnim = null;
+        let lastRelX = null, lastRelY = null;
 
         function animCard() {
-            if (window.settingsState && !window.settingsState.tiltMode) {
+            if (window.settingsState && (!window.settingsState.tiltMode || window.settingsState.perfLevel === 2)) {
                 card.style.transform = '';
                 cAnim = null;
                 return;
@@ -527,21 +1353,40 @@ document.addEventListener('DOMContentLoaded', () => {
             card.style.transform = hovered
                 ? `perspective(1000px) rotateX(${curRX.toFixed(2)}deg) rotateY(${curRY.toFixed(2)}deg) translateY(-6px) scale(1.02)`
                 : `perspective(1000px) rotateX(${curRX.toFixed(2)}deg) rotateY(${curRY.toFixed(2)}deg)`;
+            if (hovered && lastRelX !== null) {
+                card.style.setProperty('--mouse-x', `${lastRelX}px`);
+                card.style.setProperty('--mouse-y', `${lastRelY}px`);
+                lastRelX = null;
+                lastRelY = null;
+            }
             cAnim = requestAnimationFrame(animCard);
         }
 
+        let cardRect = null;
+
+        card.addEventListener('mouseenter', () => {
+            cardRect = card.getBoundingClientRect();
+        });
+
         card.addEventListener('mousemove', (e) => {
-            const r = card.getBoundingClientRect();
-            card.style.setProperty('--mouse-x', `${e.clientX - r.left}px`);
-            card.style.setProperty('--mouse-y', `${e.clientY - r.top}px`);
-            tgtRX = ((e.clientY - r.top - r.height / 2) / (r.height / 2)) * -7;
-            tgtRY = ((e.clientX - r.left - r.width / 2) / (r.width / 2)) * 7;
+            if (window.matchMedia('(pointer: coarse)').matches) return;
+            if (window.settingsState && (!window.settingsState.tiltMode || window.settingsState.perfLevel === 2)) return;
+            if (!cardRect) cardRect = card.getBoundingClientRect();
+            const relX = e.clientX - cardRect.left;
+            const relY = e.clientY - cardRect.top;
+            lastRelX = relX;
+            lastRelY = relY;
+            tgtRX = ((relY - cardRect.height / 2) / (cardRect.height / 2)) * -7;
+            tgtRY = ((relX - cardRect.width / 2) / (cardRect.width / 2)) * 7;
             hovered = true;
             if (!cAnim) cAnim = requestAnimationFrame(animCard);
         });
 
         card.addEventListener('mouseleave', () => {
             hovered = false;
+            cardRect = null;
+            lastRelX = null;
+            lastRelY = null;
             tgtRX = 0; tgtRY = 0;
             card.style.removeProperty('--mouse-x');
             card.style.removeProperty('--mouse-y');
@@ -560,6 +1405,9 @@ document.addEventListener('DOMContentLoaded', () => {
         card.addEventListener('pointerleave', releaseCardPress);
 
         card.addEventListener('click', (e) => {
+            if (card.classList.contains('is-no-book')) return;
+            if (card.classList.contains('is-dual-card')) return;
+
             const r = card.getBoundingClientRect();
             const ripple = document.createElement('span');
             ripple.classList.add('ripple');
@@ -590,6 +1438,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalLaunchTitle = document.getElementById('modalLaunchTitle');
     const modalLaunchCoverBox = document.getElementById('modalLaunchCoverBox');
     const modalLaunchCoverImg = document.getElementById('modalLaunchCoverImg');
+    const modalLaunchScheduleHeader = document.getElementById('modalLaunchScheduleHeader');
+    const modalLaunchLessonNum = document.getElementById('modalLaunchLessonNum');
+    const modalLaunchLessonTime = document.getElementById('modalLaunchLessonTime');
+    const modalLaunchIconBox = document.getElementById('modalLaunchIconBox');
+    const modalLaunchIconPlaceholder = document.getElementById('modalLaunchIconPlaceholder');
     const modalHomeBarZone = document.getElementById('modalHomeBarZone');
     const modalGdzList = document.getElementById('modalGdzList');
     const modalBookLinkBtn = document.getElementById('modalBookLinkBtn');
@@ -717,29 +1570,31 @@ document.addEventListener('DOMContentLoaded', () => {
         "Англійська мова": {
             title: "ГДЗ Англійська мова",
             shortTitle: "АНГЛІЙСЬКА МОВА",
-            book: "https://pidruchnyk.com.ua/2903-angliyska-mova-karpiuk-8-klas-2025.html",
-            image: null,
+            book: "https://pidruchnyk.com.ua/2895-angliiska-mova-stairing-8-klas.html",
+            image: "assets/books/english.jpg",
             gdz: [
-                { name: "ГДЗ ВШКОЛЕ", url: "https://vshkole.com/8-klass/reshebniki/anglijska-mova" },
-                { name: "ГДЗОНЛАЙН", url: "https://gdzonline.net/8_klas/angliyska_mova_8_klas/" }
+                { name: "ГДЗОНЛАЙН", url: "https://gdzonline.net/901-english-8-styring.html" },
+                { name: "ГДЗ ШКОЛАИНЮА", url: "https://shkola.in.ua/3251-hdz-anhliiska-mova-8-klas-stairih.html" }
             ]
         },
         "Українська література": {
             title: "ГДЗ Українська література",
             shortTitle: "УКРАЇНСЬКА ЛІТЕРАТУРА",
-            book: "https://pidruchnyk.com.ua/2908-ukrainska-literatura-avramenko-8-klas-2025.html",
-            image: null,
+            book: "https://pidruchnyk.com.ua/2962-ukrainska-literatura-avramenko-8-klas-2025.html",
+            image: "assets/books/ukr_lit.jpg",
             gdz: [
-                { name: "ГДЗ ВШКОЛЕ", url: "https://vshkole.com/8-klass/reshebniki/ukrayinska-literatura" }
+                { name: "ГДЗ ШКОЛАИНЮА", url: "https://shkola.in.ua/2780-hdz-ukrainska-literatura-8-klas-avramenko.html" },
+                { name: "ГДЗОНЛАЙН", url: "https://gdzonline.net/906-ukrlit-8-klas-avramenko.html" }
             ]
         },
         "Зарубіжна література": {
             title: "ГДЗ Зарубіжна література",
             shortTitle: "ЗАРУБІЖНА ЛІТЕРАТУРА",
-            book: "https://pidruchnyk.com.ua/2916-zarubizhna-literatura-nikolenko-8-klas-2025.html",
-            image: null,
+            book: "https://pidruchnyk.com.ua/2991-zarubizhna-literatura-nikolenko-8-klas-2025.html",
+            image: "assets/books/world_lit.jpg",
             gdz: [
-                { name: "ГДЗ ВШКОЛЕ", url: "https://vshkole.com/8-klass/reshebniki/zarubizhna-literatura" }
+                { name: "ГДЗ ШКОЛАИНЮА", url: "https://shkola.in.ua/3270-hdz-zarubizhna-literatura-8-klas-nikolenko.html" },
+                { name: "ГДЗОНЛАЙН", url: "https://gdzonline.net/905-zarubizhna-8-nikolenko.html" }
             ]
         },
         "Інформатика": {
@@ -815,7 +1670,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let originScrollY = 0;
     let modalRestRect = null;
     let originCard = null;
-    let modalState = 'closed';
+    modalState = 'closed';
     let transitionId = 0;
     let modalAnimation = null;
     let contentAnimation = null;
@@ -826,8 +1681,78 @@ document.addEventListener('DOMContentLoaded', () => {
     let launchTimer = null;
 
     // Apple signature spring curves
-    const launchEasing = 'cubic-bezier(0.32, 0.72, 0, 1)';
-    const closeEasing = 'cubic-bezier(0.32, 0.72, 0, 1)';
+    let launchEasing = 'cubic-bezier(0.32, 0.72, 0, 1)';
+    let closeEasing = 'cubic-bezier(0.32, 0.72, 0, 1)';
+
+    function getCardUnscaledRect(card) {
+        if (!card) return null;
+        let left = 0, top = 0, curr = card;
+        while (curr) {
+            left += curr.offsetLeft || 0;
+            top += curr.offsetTop || 0;
+            curr = curr.offsetParent;
+        }
+        const width = card.offsetWidth;
+        const height = card.offsetHeight;
+        const scrollX = window.scrollX || window.pageXOffset || 0;
+        const scrollY = window.scrollY || window.pageYOffset || 0;
+        return {
+            left: left - scrollX,
+            top: top - scrollY,
+            width,
+            height,
+            right: (left - scrollX) + width,
+            bottom: (top - scrollY) + height
+        };
+    }
+
+    function syncModalLaunchDetails(card, overrideTitle) {
+        if (!card) return;
+        const fullTitle = overrideTitle || card.getAttribute('data-title') || '';
+        const subject = fullTitle.replace(/^ГДЗ\s*/i, '').trim();
+        const subjectData = SUBJECTS_DB[subject];
+
+        // 1. Title
+        if (modalLaunchTitle) {
+            modalLaunchTitle.textContent = subjectData ? subjectData.title : fullTitle;
+        }
+        // 2. Schedule header badges (exact match with card)
+        const schedHeader = card.querySelector('.card-schedule-header');
+        if (schedHeader && modalLaunchScheduleHeader) {
+            modalLaunchScheduleHeader.style.display = 'flex';
+            const numEl = schedHeader.querySelector('.lesson-num-badge');
+            const timeEl = schedHeader.querySelector('.lesson-time-badge');
+            if (numEl && modalLaunchLessonNum) {
+                modalLaunchLessonNum.textContent = numEl.textContent;
+                modalLaunchLessonNum.className = numEl.className;
+            }
+            if (timeEl && modalLaunchLessonTime) {
+                modalLaunchLessonTime.textContent = timeEl.textContent;
+            }
+        } else if (modalLaunchScheduleHeader) {
+            modalLaunchScheduleHeader.style.display = 'none';
+        }
+        // 3. Media: cover image or SVG icon
+        if (subjectData && subjectData.image) {
+            if (modalLaunchCoverBox && modalLaunchCoverImg) {
+                modalLaunchCoverImg.src = subjectData.image;
+                modalLaunchCoverBox.style.display = 'flex';
+            }
+            if (modalLaunchIconBox) modalLaunchIconBox.style.display = 'none';
+        } else {
+            const cardImg = card.querySelector('.card-cover-img');
+            const cardIcon = card.querySelector('.card-icon-placeholder');
+            if (cardImg && modalLaunchCoverBox && modalLaunchCoverImg) {
+                modalLaunchCoverImg.src = cardImg.src;
+                modalLaunchCoverBox.style.display = 'flex';
+                if (modalLaunchIconBox) modalLaunchIconBox.style.display = 'none';
+            } else if (cardIcon && modalLaunchIconBox && modalLaunchIconPlaceholder) {
+                modalLaunchIconPlaceholder.innerHTML = cardIcon.innerHTML;
+                modalLaunchIconBox.style.display = 'flex';
+                if (modalLaunchCoverBox) modalLaunchCoverBox.style.display = 'none';
+            }
+        }
+    }
 
     function rectFrame(rect, radius, opacity = 1) {
         return {
@@ -837,6 +1762,16 @@ document.addEventListener('DOMContentLoaded', () => {
             height: `${rect.height}px`,
             borderRadius: `${radius}px`,
             opacity
+        };
+    }
+
+    function interpolateRect(r1, r2, progress) {
+        return {
+            left: r1.left + (r2.left - r1.left) * progress,
+            top: r1.top + (r2.top - r1.top) * progress,
+            width: r1.width + (r2.width - r1.width) * progress,
+            height: r1.height + (r2.height - r1.height) * progress,
+            radius: 22 + ((r2.radius || 28) - 22) * progress
         };
     }
 
@@ -884,8 +1819,11 @@ document.addEventListener('DOMContentLoaded', () => {
             originCard.classList.remove('is-opening', 'is-returning');
             originCard.style.opacity = '1';
             originCard.style.visibility = 'visible';
+            originCard.style.pointerEvents = '';
             originCard.style.removeProperty('--mouse-x');
             originCard.style.removeProperty('--mouse-y');
+            originCard = null;
+            originRect = null;
         }
     }
 
@@ -933,11 +1871,11 @@ document.addEventListener('DOMContentLoaded', () => {
             modalHomeBarZone.style.opacity = '1';
             modalHomeBarZone.style.transform = '';
         }
-        if (originCard) originCard.style.opacity = '';
     }
 
-    function openModal(card) {
+    function openModal(card, overrideDbTitle) {
         if (!modalBackdrop || !modalContainer) return;
+        if (card && card.classList && card.classList.contains('is-no-book')) return;
 
         // If clicking the same card that is already open or currently launching, do nothing
         if (card === originCard && ['opening', 'open'].includes(modalState)) {
@@ -977,7 +1915,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             modalState = 'opening';
             const thisTransition = transitionId;
-            const launchDuration = 440;
+            const launchDuration = 320;
 
             const relaunch = modalContainer.animate([
                 { ...rectFrame(currentRect, computedRadius, 1), offset: 0 },
@@ -1036,8 +1974,8 @@ document.addEventListener('DOMContentLoaded', () => {
             modalState = 'closed';
         }
 
-        function populateModalContent(targetCard) {
-            const fullTitle = targetCard.getAttribute('data-title') || '';
+        function populateModalContent(targetCard, overrideTitle) {
+            const fullTitle = overrideTitle || targetCard.getAttribute('data-title') || '';
             const subject = fullTitle.replace(/^ГДЗ\s*/i, '').trim();
             const subjectData = SUBJECTS_DB[subject] || {
                 title: fullTitle,
@@ -1104,11 +2042,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        populateModalContent(card);
+        populateModalContent(card, overrideDbTitle);
 
+        card.classList.remove('is-pressed');
         originCard = card;
+        originRect = getCardUnscaledRect(card) || card.getBoundingClientRect();
+        syncModalLaunchDetails(card, overrideDbTitle);
         card.classList.add('is-opening');
-        originRect = card.getBoundingClientRect();
+        card.style.opacity = '0';
         originScrollX = window.scrollX || window.pageXOffset || 0;
         originScrollY = window.scrollY || window.pageYOffset || 0;
         modalState = 'opening';
@@ -1119,10 +2060,10 @@ document.addEventListener('DOMContentLoaded', () => {
         modalBackdrop.classList.add('is-open');
         appContainer.classList.add('modal-open');
         modalBackdrop.setAttribute('aria-hidden', 'false');
+        window.lenis?.stop();
         clearModalAnimation();
 
         modalRestRect = getModalRestRect();
-        pinModalToRect(originRect, 22);
 
         // Prepare launch screen crossfade
         if (modalLaunchView) {
@@ -1141,13 +2082,31 @@ document.addEventListener('DOMContentLoaded', () => {
             modalHomeBarZone.style.transform = 'translateY(10px)';
         }
 
-        const launchDuration = isMobile ? 320 : 520;
+        playTapticAudio('open');
+        const curPreset = ANIM_PRESETS[window.settingsState?.animPreset] || ANIM_PRESETS.cinematic;
+        const launchDuration = window.settingsState?.perfLevel === 2 ? 140 : (isMobile ? curPreset.openMobileDur : curPreset.openDur);
+        launchEasing = curPreset.openEase;
+        closeEasing = curPreset.closeEase;
+        const hasMotionBlur = (window.settingsState?.perfLevel ?? 0) === 0;
+        const blurStrength = window.settingsState?.motionBlurStrength ?? 3.0;
+        const peakBlur = blurStrength * 2.2;
+        const midBlur = blurStrength * 0.7;
 
-        // 1. Frame Morphing with Apple CASpringAnimation curve (launchEasing)
-        const launch = modalContainer.animate([
-            { ...rectFrame(originRect, 22, 1), offset: 0 },
-            { ...rectFrame(modalRestRect, modalRestRect.radius || 28), offset: 1 }
-        ], { duration: launchDuration, easing: launchEasing, fill: 'forwards' });
+        pinModalToRect(originRect, isMobile ? 20 : 22);
+        const launchKeyframes = [
+            { ...rectFrame(originRect, isMobile ? 20 : 22, 1), offset: 0 },
+            { ...rectFrame(modalRestRect, modalRestRect.radius || (isMobile ? 24 : 28)), offset: 1 }
+        ];
+
+        launch = modalContainer.animate(launchKeyframes, { duration: launchDuration, easing: launchEasing, fill: 'forwards' });
+
+        if (hasMotionBlur) {
+            modalContainer.animate([
+                { filter: 'blur(0px)' },
+                { filter: `blur(${peakBlur.toFixed(1)}px)`, offset: 0.35 },
+                { filter: 'blur(0px)', offset: 1 }
+            ], { duration: launchDuration, easing: 'ease-out' });
+        }
 
         // 2. Launch Screen Crossfade into active content
         const launchViewLaunch = modalLaunchView?.animate([
@@ -1183,6 +2142,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 modalAnimation = null;
                 launchTimer = null;
                 pinModalToRect(modalRestRect, modalRestRect.radius || 28);
+                modalContainer.style.transform = 'none';
+                modalContainer.style.transformOrigin = '';
+                modalContainer.style.filter = '';
                 if (modalLaunchView) {
                     modalLaunchView.style.opacity = '0';
                 }
@@ -1198,6 +2160,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     modalHomeBarZone.style.opacity = '1';
                     modalHomeBarZone.style.transform = 'none';
                 }
+                if (originCard) {
+                    originCard.classList.add('is-opening');
+                    originCard.style.opacity = '0';
+                }
             }
         };
         launch.onfinish = markOpen;
@@ -1212,8 +2178,11 @@ document.addEventListener('DOMContentLoaded', () => {
         modalBackdrop.classList.add('is-closing');
         appContainer.classList.add('modal-closing');
 
+        playTapticAudio('close');
         const isMobile = window.innerWidth <= 768 || window.matchMedia('(pointer: coarse)').matches;
-        const closeDuration = isMobile ? 240 : 340;
+        const curPreset = ANIM_PRESETS[window.settingsState?.animPreset] || ANIM_PRESETS.cinematic;
+        const closeDuration = window.settingsState?.perfLevel === 2 ? 110 : (isMobile ? curPreset.closeMobileDur : curPreset.closeDur);
+        closeEasing = curPreset.closeEase;
 
         // Keep originCard cleanly hidden during the flight.
         // It must NOT show up early underneath, eliminating the double-card glitch!
@@ -1227,6 +2196,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (thisTransition !== transitionId || modalState === 'closed') return;
 
             modalContainer.style.visibility = 'hidden';
+            modalContainer.style.transform = 'none';
+            modalContainer.style.transformOrigin = '';
+            modalContainer.style.filter = '';
             clearModalAnimation();
             modalBackdrop.classList.remove('is-closing');
             modalBackdrop.classList.remove('is-open');
@@ -1245,22 +2217,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 landingCard.classList.remove('is-opening', 'is-returning');
                 landingCard.style.opacity = '1';
                 landingCard.style.visibility = 'visible';
+                landingCard.style.pointerEvents = '';
                 landingCard.style.removeProperty('--mouse-x');
                 landingCard.style.removeProperty('--mouse-y');
-
-                // iOS Elastic Bounce overshoot on arriving icon
-                landingCard.animate([
-                    { transform: 'scale(0.94)' },
-                    { transform: 'scale(1.035)', offset: 0.5 },
-                    { transform: 'scale(0.99)', offset: 0.78 },
-                    { transform: 'scale(1)', offset: 1 }
-                ], {
-                    duration: 300,
-                    easing: 'cubic-bezier(0.2, 0.85, 0.25, 1)',
-                    fill: 'none'
-                });
             }
+            originCard = null;
+            originRect = null;
             modalBackdrop.setAttribute('aria-hidden', 'true');
+            window.lenis?.start();
             modalState = 'closed';
             requestAnimationFrame(() => {
                 modalContainer.style.visibility = '';
@@ -1270,17 +2234,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentRect = modalContainer.getBoundingClientRect();
         const computedBorderRadius = parseFloat(getComputedStyle(modalContainer).borderRadius) || (modalRestRect?.radius || 28);
 
-        // Calculate the true unscaled target rectangle of the card accounting for any page scroll
-        let targetRect = null;
-        if (originCard) {
-            const cardRect = originCard.getBoundingClientRect();
-            if (cardRect.width > 0 && cardRect.height > 0) {
-                targetRect = cardRect;
-            }
-        }
-        if (!targetRect && originRect) {
-            const scrollDeltaX = (window.scrollX || window.pageXOffset || 0) - originScrollX;
-            const scrollDeltaY = (window.scrollY || window.pageYOffset || 0) - originScrollY;
+        // Sync launch view with origin card (schedule badges, icon/cover, title)
+        syncModalLaunchDetails(originCard);
+
+        // Calculate the true unscaled target rectangle of the card
+        let targetRect = getCardUnscaledRect(originCard);
+        if (!targetRect && originRect && originRect.width > 0 && originRect.height > 0) {
+            const currentScrollX = window.scrollX || window.pageXOffset || 0;
+            const currentScrollY = window.scrollY || window.pageYOffset || 0;
+            const scrollDeltaX = currentScrollX - (originScrollX || 0);
+            const scrollDeltaY = currentScrollY - (originScrollY || 0);
             targetRect = {
                 left: originRect.left - scrollDeltaX,
                 top: originRect.top - scrollDeltaY,
@@ -1304,35 +2267,49 @@ document.addEventListener('DOMContentLoaded', () => {
         modalLaunchView?.getAnimations().forEach(a => a.cancel());
         modalHomeBarZone?.getAnimations().forEach(a => a.cancel());
 
-        // Crossfade launch view back in so the card title appears inside the shrinking container
-        if (modalLaunchTitle && originCard) {
-            modalLaunchTitle.textContent = originCard.getAttribute('data-title') || '';
+        const hasMotionBlur = (window.settingsState?.perfLevel ?? 0) === 0;
+        const blurStrength = window.settingsState?.motionBlurStrength ?? 3.0;
+        const peakBlur = blurStrength * 2.0;
+
+        // Pure single-curve ease-out flight from currentRect to targetRect (no intermediate stalls or squash)
+        const closeKeyframes = [
+            { ...rectFrame(currentRect, computedBorderRadius, 1), offset: 0 },
+            { ...rectFrame(targetRect, isMobile ? 20 : 22, 1), offset: 1 }
+        ];
+
+        const close = modalContainer.animate(closeKeyframes, { duration: closeDuration, easing: closeEasing, fill: 'forwards' });
+
+        // Run soft motion blur independently on its own animation track so geometry curve stays completely smooth
+        if (hasMotionBlur) {
+            modalContainer.animate([
+                { filter: 'blur(0px)' },
+                { filter: `blur(${peakBlur.toFixed(1)}px)`, offset: 0.35 },
+                { filter: 'blur(0px)', offset: 1 }
+            ], { duration: closeDuration, easing: 'ease-out' });
         }
+
+        // Smooth visual crossfade between open content and launch view (180ms smooth dissolve)
+        const crossfadeDuration = Math.min(180, closeDuration);
+
+        const contentClose = modalContent?.animate([
+            { opacity: 1 },
+            { opacity: 0 }
+        ], { duration: crossfadeDuration, easing: 'ease-out', fill: 'forwards' });
+
         const launchViewClose = modalLaunchView?.animate([
             { opacity: 0 },
             { opacity: 1 }
-        ], { duration: 140, easing: closeEasing, fill: 'forwards' });
-
-        // Modal stays solid and visible (opacity: 1) morphing directly into targetRect without fading away
-        const close = modalContainer.animate([
-            { ...rectFrame(currentRect, computedBorderRadius, 1), offset: 0 },
-            { ...rectFrame(targetRect, 22, 1), offset: 1 }
-        ], { duration: closeDuration, easing: closeEasing, fill: 'forwards' });
-
-        const contentClose = modalContent?.animate([
-            { opacity: 1, transform: 'scale(1)' },
-            { opacity: 0, transform: 'scale(0.95)' }
-        ], { duration: 70, easing: 'ease-out', fill: 'forwards' });
+        ], { duration: crossfadeDuration, easing: closeEasing, fill: 'forwards' });
 
         const chromeClose = modalCloseBtn?.animate([
             { opacity: 1, transform: 'scale(1)' },
             { opacity: 0, transform: 'scale(0.8)' }
-        ], { duration: 70, easing: 'ease-out', fill: 'forwards' });
+        ], { duration: Math.min(100, closeDuration), easing: 'ease-out', fill: 'forwards' });
 
         const homeBarClose = modalHomeBarZone?.animate([
             { opacity: 1, transform: 'scale(1)' },
             { opacity: 0, transform: 'scale(0.8)' }
-        ], { duration: 70, easing: 'ease-out', fill: 'forwards' });
+        ], { duration: Math.min(100, closeDuration), easing: 'ease-out', fill: 'forwards' });
 
         modalAnimation = close;
         contentAnimation = contentClose || null;
@@ -1340,7 +2317,7 @@ document.addEventListener('DOMContentLoaded', () => {
         launchViewAnimation = launchViewClose || null;
         homeBarAnimation = homeBarClose || null;
         close.onfinish = finishClose;
-        setTimeout(finishClose, closeDuration + 40);
+        setTimeout(finishClose, closeDuration + 15);
     }
 
     // ==========================================================================
@@ -1407,9 +2384,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         modalContainer.style.transform = `translate3d(${translateX.toFixed(1)}px, ${translateY.toFixed(1)}px, 0) scale(${scale.toFixed(3)})`;
 
-        // Progressive Z-Axis background scale up from depth (GPU compositing only, no expensive filter re-renders)
-        const bgScale = 0.94 + progress * 0.06;
-        appContainer.style.transform = `scale(${bgScale.toFixed(3)}) translateY(${((1 - progress) * 4).toFixed(1)}px)`;
+        const isMobileDevice = window.innerWidth <= 768 || window.matchMedia('(pointer: coarse)').matches;
+        if (!isMobileDevice && (!window.settingsState || !window.settingsState.perfMode)) {
+            const bgScale = 0.94 + progress * 0.06;
+            appContainer.style.transform = `scale(${bgScale.toFixed(3)}) translateY(${((1 - progress) * 4).toFixed(1)}px)`;
+        }
         modalBackdrop.style.opacity = `${Math.max(0.3, 1 - progress * 0.5)}`;
     }
 
@@ -1513,9 +2492,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-            if (modalBackdrop && modalBackdrop.classList.contains('is-open')) closeModal();
-            if (scheduleModalBackdrop && scheduleModalBackdrop.classList.contains('is-open')) closeScheduleModal();
-            if (typeof closeSettingsModal === 'function' && settingsModalBackdrop && settingsModalBackdrop.classList.contains('is-open')) closeSettingsModal();
+            if (typeof closeSplitSubjectModal === 'function' && splitModalBackdrop && splitModalBackdrop.classList.contains('is-open')) {
+                closeSplitSubjectModal();
+            } else if (typeof closeSettingsModal === 'function' && settingsModalBackdrop && settingsModalBackdrop.classList.contains('is-open')) {
+                closeSettingsModal();
+            } else if (modalBackdrop && modalBackdrop.classList.contains('is-open')) {
+                closeModal();
+            } else if (scheduleModalBackdrop && scheduleModalBackdrop.classList.contains('is-open')) {
+                closeScheduleModal();
+            } else if (calcModalBackdrop && calcModalBackdrop.classList.contains('is-open')) {
+                closeCalcModal();
+            } else if (aiModalBackdrop && aiModalBackdrop.classList.contains('is-open')) {
+                closeAiModal();
+            } else if (alarmModalBackdrop && alarmModalBackdrop.classList.contains('is-open')) {
+                closeAlarmModal();
+            }
         }
     });
 
@@ -1656,7 +2647,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 { num: 2, name: "Українська мова", time: "08:55 - 09:40", dbTitle: "ГДЗ Українська мова", image: "assets/books/ukr_mova.jpg" },
                 { num: 3, name: "Фізичне виховання", time: "09:55 - 10:40", dbTitle: "Фізична культура", icon: "sport" },
                 { num: 4, name: "Історія України", time: "10:50 - 11:35", dbTitle: "ГДЗ Історія України", image: "assets/books/ukr_history.jpg" },
-                { num: 5, name: "Англійська мова", time: "11:40 - 12:25", dbTitle: "ГДЗ Англійська мова", icon: "lang" },
+                { num: 5, name: "Англійська мова", time: "11:40 - 12:25", dbTitle: "ГДЗ Англійська мова", image: "assets/books/english.jpg" },
                 { num: 6, name: "Алгебра", time: "12:30 - 13:15", dbTitle: "ГДЗ Алгебра", image: "assets/books/algebra.jpg" },
                 { num: 7, name: "Образотворче мистецтво", time: "13:20 - 14:05", dbTitle: "Образотворче мистецтво", icon: "art" }
             ]
@@ -1681,9 +2672,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 { num: 1, name: "Фізичне виховання", time: "08:00 - 08:45", dbTitle: "Фізична культура", icon: "sport" },
                 { num: 2, name: "Інформатика", time: "08:55 - 09:40", dbTitle: "ГДЗ Інформатика", icon: "info" },
                 { num: 3, name: "Фізика", time: "09:55 - 10:40", dbTitle: "ГДЗ Фізика", image: "assets/books/physics.jpg" },
-                { num: 4, name: "Англійська мова", time: "10:50 - 11:35", dbTitle: "ГДЗ Англійська мова", icon: "lang" },
+                { num: 4, name: "Англійська мова", time: "10:50 - 11:35", dbTitle: "ГДЗ Англійська мова", image: "assets/books/english.jpg" },
                 { num: 5, name: "Геометрія", time: "11:40 - 12:25", dbTitle: "ГДЗ Геометрія", image: "assets/books/geometry.jpg" },
-                { num: 6, name: "Українська література", time: "12:30 - 13:15", dbTitle: "ГДЗ Українська література", icon: "book" },
+                { num: 6, name: "Українська література", time: "12:30 - 13:15", dbTitle: "ГДЗ Українська література", image: "assets/books/ukr_lit.jpg" },
                 { num: 7, name: "ЗБД / Підприємництво", time: "13:20 - 14:05", dbTitle: "ЗБД / Підприємництво", image: "assets/books/health.jpg" }
             ]
         },
@@ -1703,9 +2694,9 @@ document.addEventListener('DOMContentLoaded', () => {
         5: {
             name: "П'ЯТНИЦЯ",
             lessons: [
-                { num: 1, name: "Англійська мова", time: "08:00 - 08:45", dbTitle: "ГДЗ Англійська мова", icon: "lang" },
+                { num: 1, name: "Англійська мова", time: "08:00 - 08:45", dbTitle: "ГДЗ Англійська мова", image: "assets/books/english.jpg" },
                 { num: 2, name: "Українська мова", time: "08:55 - 09:40", dbTitle: "ГДЗ Українська мова", image: "assets/books/ukr_mova.jpg" },
-                { num: 3, name: "Зарубіжна література", time: "09:55 - 10:40", dbTitle: "ГДЗ Зарубіжна література", icon: "book" },
+                { num: 3, name: "Зарубіжна література", time: "09:55 - 10:40", dbTitle: "ГДЗ Зарубіжна література", image: "assets/books/world_lit.jpg" },
                 { num: 4, name: "Географія", time: "10:50 - 11:35", dbTitle: "ГДЗ Географія", image: "assets/books/geography.jpg" },
                 { num: 5, name: "Інформатика / Укр.літ", time: "11:40 - 12:25", dbTitle: "Інформатика / Укр.літ", icon: "info" },
                 { num: 6, name: "Технології", time: "12:30 - 13:15", dbTitle: "Технології", icon: "tech" }
@@ -1722,6 +2713,195 @@ document.addEventListener('DOMContentLoaded', () => {
         book: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`,
         tech: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>`
     };
+
+    const DUAL_SUBJECTS_MAP = {
+        "Інформатика / Укр.літ": {
+            title: "5 УРОК: Інформатика / Укр.літ",
+            subtitle: "Цей урок поділено на підгрупи. Оберіть потрібний предмет:",
+            options: [
+                {
+                    name: "Українська література",
+                    shortName: "Укр.літ",
+                    dbTitle: "ГДЗ Українська література",
+                    hasBook: true,
+                    image: "assets/books/ukr_lit.jpg",
+                    desc: "Підручник О. Авраменко • 2 ГДЗ"
+                },
+                {
+                    name: "Інформатика",
+                    shortName: "Інформатика",
+                    dbTitle: null,
+                    hasBook: false,
+                    icon: "info",
+                    desc: "Підручник відсутній"
+                }
+            ]
+        },
+        "Алгебра / Геометрія": {
+            title: "6 УРОК: Алгебра / Геометрія",
+            subtitle: "Оберіть, який підручник або ГДЗ відкрити:",
+            options: [
+                {
+                    name: "Алгебра",
+                    shortName: "Алгебра",
+                    dbTitle: "ГДЗ Алгебра",
+                    hasBook: true,
+                    image: "assets/books/algebra.jpg",
+                    desc: "Підручник О. Істер • 3 ГДЗ"
+                },
+                {
+                    name: "Геометрія",
+                    shortName: "Геометрія",
+                    dbTitle: "ГДЗ Геометрія",
+                    hasBook: true,
+                    image: "assets/books/geometry.jpg",
+                    desc: "Підручник О. Істер • 3 ГДЗ"
+                }
+            ]
+        },
+        "ЗБД / Підприємництво": {
+            title: "7 УРОК: ЗБД / Підприємництво",
+            subtitle: "Оберіть, який підручник або ГДЗ відкрити:",
+            options: [
+                {
+                    name: "Здоров'я, безпека та добробут",
+                    shortName: "ЗБД",
+                    dbTitle: "ГДЗ Здоров'я, безпека та добробут",
+                    hasBook: true,
+                    image: "assets/books/health.jpg",
+                    desc: "Підручник Т. Воронцова • 1 ГДЗ"
+                },
+                {
+                    name: "Підприємництво та фінансова грамотність",
+                    shortName: "Підприємництво",
+                    dbTitle: "ГДЗ Підприємництво і фінансова грамотність",
+                    hasBook: true,
+                    image: "assets/books/entrepreneurship.jpg",
+                    desc: "Підручник Т. Гільберг"
+                }
+            ]
+        }
+    };
+
+    function isNoBookLesson(lesson) {
+        if (!lesson) return false;
+        const name = (lesson.name || '').trim().toLowerCase();
+        if (name.includes('/')) return false; // Dual lessons handled via split picker
+        return (
+            name === 'технології' ||
+            name === 'інформатика' ||
+            name.includes('технологі') ||
+            name.includes('інформатик') ||
+            name.includes('фізичн') ||
+            name.includes('мистецтв')
+        );
+    }
+
+    const splitModalBackdrop = document.getElementById('splitModalBackdrop');
+    const splitModalContainer = document.getElementById('splitModalContainer');
+    const splitModalCloseBtn = document.getElementById('splitModalCloseBtn');
+    const splitModalLessonBadge = document.getElementById('splitModalLessonBadge');
+    const splitModalTimeBadge = document.getElementById('splitModalTimeBadge');
+    const splitModalTitle = document.getElementById('splitModalTitle');
+    const splitModalSubtitle = document.getElementById('splitModalSubtitle');
+    const splitModalOptions = document.getElementById('splitModalOptions');
+
+    function openSplitSubjectModal(lesson, originCard) {
+        if (!splitModalBackdrop || !splitModalContainer) return;
+        const config = DUAL_SUBJECTS_MAP[lesson.name] || {
+            title: `${lesson.num} УРОК: ${lesson.name}`,
+            subtitle: "Цей урок поділено на підгрупи. Оберіть потрібний предмет:",
+            options: lesson.name.split('/').map(part => {
+                const clean = part.trim();
+                const matchedKey = Object.keys(SUBJECTS_DB).find(k => k.toLowerCase() === clean.toLowerCase() || k.toLowerCase().includes(clean.toLowerCase()));
+                const subj = matchedKey ? SUBJECTS_DB[matchedKey] : null;
+                const hasB = subj && subj.book && subj.book !== '#';
+                return {
+                    name: matchedKey || clean,
+                    shortName: clean,
+                    dbTitle: subj ? subj.title : null,
+                    hasBook: !!hasB,
+                    image: subj?.image || null,
+                    icon: subj?.image ? null : 'book',
+                    desc: hasB ? 'Підручник та ГДЗ' : 'Підручник відсутній'
+                };
+            })
+        };
+
+        if (splitModalLessonBadge) splitModalLessonBadge.textContent = `${lesson.num} УРОК`;
+        if (splitModalTimeBadge) splitModalTimeBadge.textContent = lesson.time || '';
+        if (splitModalTitle) splitModalTitle.textContent = config.title;
+        if (splitModalSubtitle) splitModalSubtitle.textContent = config.subtitle;
+
+        if (splitModalOptions) {
+            splitModalOptions.innerHTML = '';
+            config.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = `split-option-btn ${opt.hasBook ? '' : 'is-disabled'}`;
+
+                let thumbHtml = '';
+                if (opt.image) {
+                    thumbHtml = `<img src="${opt.image}" class="split-thumb-img" alt="${opt.name}" loading="lazy" decoding="async" />`;
+                } else {
+                    const svg = ICONS_SVG[opt.icon] || ICONS_SVG.book;
+                    thumbHtml = svg;
+                }
+
+                btn.innerHTML = `
+                    <div class="split-option-thumb">
+                        ${thumbHtml}
+                    </div>
+                    <div class="split-option-info">
+                        <div class="split-option-name">${opt.name}</div>
+                        <div class="split-option-desc">${opt.desc}</div>
+                    </div>
+                    <div class="split-option-action">
+                        ${opt.hasBook ? '<span class="split-action-pill">Відкрити →</span>' : '<span class="split-action-pill is-none">Немає</span>'}
+                    </div>
+                `;
+
+                if (opt.hasBook) {
+                    btn.addEventListener('click', () => {
+                        closeSplitSubjectModal();
+                        setTimeout(() => {
+                            openModal(originCard, opt.dbTitle);
+                        }, 120);
+                    });
+                }
+
+                splitModalOptions.appendChild(btn);
+            });
+        }
+
+        window.lenis?.stop();
+        splitModalBackdrop.classList.remove('is-closing');
+        splitModalBackdrop.classList.add('is-open');
+        splitModalBackdrop.setAttribute('aria-hidden', 'false');
+
+        if (window.settingsState?.hapticMode !== false && 'vibrate' in navigator) {
+            try { navigator.vibrate(10); } catch (_) {}
+        }
+    }
+
+    function closeSplitSubjectModal() {
+        if (!splitModalBackdrop || !splitModalBackdrop.classList.contains('is-open')) return;
+        splitModalBackdrop.classList.add('is-closing');
+        setTimeout(() => {
+            splitModalBackdrop.classList.remove('is-open', 'is-closing');
+            splitModalBackdrop.setAttribute('aria-hidden', 'true');
+            window.lenis?.start();
+        }, 220);
+    }
+
+    if (splitModalCloseBtn) {
+        splitModalCloseBtn.addEventListener('click', closeSplitSubjectModal);
+    }
+    if (splitModalBackdrop) {
+        splitModalBackdrop.addEventListener('click', (e) => {
+            if (e.target === splitModalBackdrop) closeSplitSubjectModal();
+        });
+    }
 
     let currentRenderedScheduleKey = null;
 
@@ -1755,6 +2935,28 @@ document.addEventListener('DOMContentLoaded', () => {
         const daySchedule = WEEK_SCHEDULE[targetDay];
         if (!daySchedule) return;
 
+        let liveLessonNum = -1;
+        if (isToday) {
+            for (let i = 0; i < daySchedule.lessons.length; i++) {
+                const times = daySchedule.lessons[i].time.split('-').map(t => t.trim());
+                const lStart = parseTimeSec(times[0]);
+                const lEnd = parseTimeSec(times[1]);
+                if (curSec >= lStart && curSec < lEnd) {
+                    liveLessonNum = daySchedule.lessons[i].num;
+                    break;
+                }
+            }
+        }
+
+        const stateKey = `${targetDay}_${isToday}_${liveLessonNum}`;
+        if (currentRenderedScheduleKey === stateKey) {
+            return; // Schedule state hasn't changed; avoid DOM thrashing
+        }
+        if (modalState && modalState !== 'closed') {
+            return; // Don't wipe schedule DOM while a card modal is active
+        }
+        currentRenderedScheduleKey = stateKey;
+
         if (isToday) {
             scheduleSectionTitle.textContent = `УРОКИ НА СЬОГОДНІ (${daySchedule.name})`;
         } else {
@@ -1768,26 +2970,27 @@ document.addEventListener('DOMContentLoaded', () => {
         scheduleCardsGrid.innerHTML = '';
 
         daySchedule.lessons.forEach(lesson => {
+            const isNoBook = isNoBookLesson(lesson);
+            const isDual = !isNoBook && (lesson.name.includes('/') || !!DUAL_SUBJECTS_MAP[lesson.name]);
+
             const card = document.createElement('button');
             card.className = 'liquid-card schedule-card';
-            card.setAttribute('data-title', lesson.dbTitle || lesson.name);
+            if (isNoBook) card.classList.add('is-no-book');
+            if (isDual) card.classList.add('is-dual-card');
 
-            // Check if this lesson is currently in progress
-            let isLive = false;
-            if (isToday) {
-                const times = lesson.time.split('-').map(t => t.trim());
-                const lStart = parseTimeSec(times[0]);
-                const lEnd = parseTimeSec(times[1]);
-                if (curSec >= lStart && curSec < lEnd) {
-                    isLive = true;
-                }
+            card.setAttribute('data-title', lesson.dbTitle || lesson.name);
+            if (isNoBook) {
+                card.setAttribute('aria-disabled', 'true');
+                card.setAttribute('tabindex', '-1');
             }
+
+            const isLive = isToday && (lesson.num === liveLessonNum);
 
             let mediaHtml = '';
             if (lesson.image) {
                 mediaHtml = `
                     <div class="card-cover-box">
-                        <img src="${lesson.image}" class="card-cover-img" alt="${lesson.name}" />
+                        <img src="${lesson.image}" class="card-cover-img" alt="${lesson.name}" loading="lazy" decoding="async" />
                     </div>`;
             } else {
                 const svgContent = ICONS_SVG[lesson.icon] || ICONS_SVG.book;
@@ -1799,21 +3002,67 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>`;
             }
 
+            const badgesHtml = `
+                <div class="card-schedule-header">
+                    <span class="lesson-num-badge ${isLive ? 'is-live' : ''}">${isLive ? 'ЗАРАЗ' : `${lesson.num} УРОК`}</span>
+                    ${isDual ? '<span class="lesson-split-pill">2 предмети ▾</span>' : ''}
+                    <span class="lesson-time-badge">${lesson.time}</span>
+                </div>
+            `;
+
+            let footerHtml = '';
+            if (isNoBook) {
+                footerHtml = `<span class="lesson-no-book-badge">Без підручника</span>`;
+            } else if (isDual) {
+                const dualConf = DUAL_SUBJECTS_MAP[lesson.name];
+                if (dualConf && dualConf.options) {
+                    footerHtml = `
+                        <div class="card-split-pills">
+                            ${dualConf.options.map(opt => `
+                                <span class="card-split-pill ${opt.hasBook ? 'has-book' : 'no-book'}" data-dbtitle="${opt.dbTitle || ''}">
+                                    ${opt.shortName}
+                                </span>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+            }
+
             card.innerHTML = `
                 <div class="liquid-lens"></div>
                 <div class="liquid-specular-edge"></div>
-                <div class="card-schedule-header">
-                    <span class="lesson-num-badge ${isLive ? 'is-live' : ''}">${isLive ? 'ЗАРАЗ' : `${lesson.num} УРОК`}</span>
-                    <span class="lesson-time-badge">${lesson.time}</span>
-                </div>
+                ${badgesHtml}
                 ${mediaHtml}
                 <div class="card-content">
                     <span class="card-title">${lesson.name}</span>
+                    ${footerHtml}
                 </div>
             `;
 
             scheduleCardsGrid.appendChild(card);
+
+            if (isNoBook) {
+                // Completely non-clickable card
+                return;
+            }
+
             initCard(card);
+
+            if (isDual) {
+                // Direct pill click listener
+                card.querySelectorAll('.card-split-pill.has-book').forEach(pill => {
+                    pill.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const dbTitle = pill.getAttribute('data-dbtitle');
+                        if (dbTitle) openModal(card, dbTitle);
+                    });
+                });
+
+                // Card body click opens split modal
+                card.addEventListener('click', (e) => {
+                    openSplitSubjectModal(lesson, card);
+                });
+            }
         });
     }
 
@@ -1837,6 +3086,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         bgAudio.addEventListener('ended', () => avatarBtn.classList.remove('is-playing'));
+        bgAudio.addEventListener('pause', () => avatarBtn.classList.remove('is-playing'));
     }
 
     // ==========================================================================
@@ -1845,64 +3095,164 @@ document.addEventListener('DOMContentLoaded', () => {
     const settingsBtn = document.getElementById('settingsBtn');
     const settingsModalBackdrop = document.getElementById('settingsModalBackdrop');
     const settingsModalCloseBtn = document.getElementById('settingsModalCloseBtn');
-    const settingPerfMode = document.getElementById('settingPerfMode');
+    const settingPerfSlider = document.getElementById('settingPerfSlider');
+    const perfLevelBadge = document.getElementById('perfLevelBadge');
+    const perfLevelDesc = document.getElementById('perfLevelDesc');
+    const stepMarks = document.querySelectorAll('.slider-step-marks:not(.blur-step-marks) .step-mark');
+    const settingBlurRow = document.getElementById('settingBlurRow');
+    const settingBlurSlider = document.getElementById('settingBlurSlider');
+    const blurLevelBadge = document.getElementById('blurLevelBadge');
+    const blurLevelDesc = document.getElementById('blurLevelDesc');
+    const blurStepMarks = document.querySelectorAll('.blur-step-marks .step-mark');
     const settingTiltMode = document.getElementById('settingTiltMode');
     const settingHapticMode = document.getElementById('settingHapticMode');
     const settingTimerDisplay = document.getElementById('settingTimerDisplay');
     const accentColorPicker = document.getElementById('accentColorPicker');
 
-    const ACCENT_PALETTE = {
-        purple: { accent: '#c058ff', glow: 'rgba(192, 88, 255, 0.45)' },
-        blue:   { accent: '#2997ff', glow: 'rgba(41, 151, 255, 0.45)' },
-        cyan:   { accent: '#00f0ff', glow: 'rgba(0, 240, 255, 0.45)' },
-        green:  { accent: '#30d158', glow: 'rgba(48, 209, 88, 0.45)' },
-        pink:   { accent: '#ff2d55', glow: 'rgba(255, 45, 85, 0.45)' },
-        orange: { accent: '#ff9f0a', glow: 'rgba(255, 159, 10, 0.45)' }
-    };
-
-    window.settingsState = {
-        perfMode: localStorage.getItem('nextgen_perf_mode') === 'true',
-        tiltMode: localStorage.getItem('nextgen_tilt_mode') !== 'false',
-        hapticMode: localStorage.getItem('nextgen_haptic_mode') !== 'false',
-        timerDisplay: localStorage.getItem('nextgen_timer_display') !== 'false',
-        accentColor: localStorage.getItem('nextgen_accent_color') || 'purple'
-    };
+    function setAiService(key) {
+        if (!AI_SERVICES[key]) return;
+        window.settingsState.aiService = key;
+        applySettings();
+        if (window.settingsState.hapticMode && 'vibrate' in navigator) {
+            try { navigator.vibrate(10); } catch (_) {}
+        }
+    }
 
     function applySettings() {
-        // 1. Performance mode
-        document.body.classList.toggle('perf-mode', window.settingsState.perfMode);
-        if (settingPerfMode) settingPerfMode.checked = window.settingsState.perfMode;
+        // 1. Performance level (0 = Quality, 1 = Balance, 2 = Ultra/Max FPS)
+        const lvl = window.settingsState.perfLevel || 0;
+        document.body.setAttribute('data-perf-level', String(lvl));
+        document.body.classList.toggle('perf-mode', lvl > 0);
 
-        // 2. 3D tilt
+        if (settingPerfSlider) settingPerfSlider.value = lvl;
+        if (perfLevelBadge) {
+            perfLevelBadge.textContent = PERF_TIERS[lvl]?.badge || 'Якість';
+        }
+        if (perfLevelDesc) {
+            perfLevelDesc.textContent = PERF_TIERS[lvl]?.desc || '';
+        }
+        if (stepMarks) {
+            stepMarks.forEach(mark => {
+                const step = parseInt(mark.getAttribute('data-step'), 10);
+                mark.classList.toggle('active', step === lvl);
+            });
+        }
+
+        // 2. Motion Blur Strength & Lock State (Unlocks only in Quality preset)
+        const isQuality = lvl === 0;
+        if (settingBlurRow) {
+            settingBlurRow.classList.toggle('is-locked', !isQuality);
+            settingBlurRow.classList.toggle('is-unlocked', isQuality);
+        }
+        if (settingBlurSlider) {
+            settingBlurSlider.disabled = !isQuality;
+            settingBlurSlider.value = window.settingsState.motionBlurStrength;
+        }
+        if (blurLevelBadge) {
+            blurLevelBadge.textContent = isQuality
+                ? `${window.settingsState.motionBlurStrength.toFixed(1)}px`
+                : '🔒 Заблоковано';
+        }
+        if (blurLevelDesc) {
+            blurLevelDesc.textContent = isQuality
+                ? 'Інтенсивність кінематографічного розмиття при русі вікон'
+                : 'Доступно лише в пресеті «Якість» (для максимальної плавності)';
+        }
+        if (blurStepMarks) {
+            blurStepMarks.forEach(mark => {
+                const blurTarget = parseFloat(mark.getAttribute('data-blur'));
+                mark.classList.toggle('active', isQuality && Math.abs(blurTarget - window.settingsState.motionBlurStrength) < 0.35);
+            });
+        }
+        document.documentElement.style.setProperty('--motion-blur-val', `${window.settingsState.motionBlurStrength}px`);
+
+        // 3. 3D tilt
         if (settingTiltMode) settingTiltMode.checked = window.settingsState.tiltMode;
 
-        // 3. Haptic
+        // 4. Haptic
         if (settingHapticMode) settingHapticMode.checked = window.settingsState.hapticMode;
 
-        // 4. Timer display
+        // 5. Timer display
         const navTimer = document.querySelector('.nav-timer');
         if (navTimer) {
             navTimer.style.display = window.settingsState.timerDisplay ? '' : 'none';
         }
         if (settingTimerDisplay) settingTimerDisplay.checked = window.settingsState.timerDisplay;
 
-        // 5. Accent color
-        const color = ACCENT_PALETTE[window.settingsState.accentColor] || ACCENT_PALETTE.purple;
-        document.documentElement.style.setProperty('--purple-accent', color.accent);
-        document.documentElement.style.setProperty('--purple-glow', color.glow);
+        // 6. Accent color (presets or custom hex) & Atmospheric Aura synchronization
+        const accentCfg = getAccentConfig(window.settingsState);
+        const auraCfg = getAuraConfig(window.settingsState);
+        document.documentElement.style.setProperty('--purple-accent', accentCfg.accent);
+        document.documentElement.style.setProperty('--purple-glow', accentCfg.glow);
+        document.documentElement.style.setProperty('--aura-glow-1', auraCfg.glow1);
+        document.documentElement.style.setProperty('--aura-glow-2', auraCfg.glow2);
+        document.documentElement.style.setProperty('--hero-reflection-color', auraCfg.reflection);
+
+        const customColorBtn = document.getElementById('customColorBtn');
+        const customColorInput = document.getElementById('customColorInput');
+        if (customColorInput && window.settingsState.customAccentHex) {
+            customColorInput.value = window.settingsState.customAccentHex;
+        }
 
         // Update active dot in picker
         if (accentColorPicker) {
-            accentColorPicker.querySelectorAll('.color-dot').forEach(dot => {
+            accentColorPicker.querySelectorAll('.color-dot:not(.custom-color-dot)').forEach(dot => {
                 dot.classList.toggle('active', dot.getAttribute('data-color') === window.settingsState.accentColor);
             });
+            if (customColorBtn) {
+                customColorBtn.classList.toggle('active', window.settingsState.accentColor === 'custom');
+            }
         }
+
+        // 7. Animation Preset
+        const settingAnimPreset = document.getElementById('settingAnimPreset');
+        const animPresetDesc = document.getElementById('animPresetDesc');
+        if (settingAnimPreset) settingAnimPreset.value = window.settingsState.animPreset || 'cinematic';
+        if (animPresetDesc) {
+            const preset = ANIM_PRESETS[window.settingsState.animPreset] || ANIM_PRESETS.cinematic;
+            animPresetDesc.textContent = preset.desc;
+        }
+
+        // 8. Sound FX
+        const settingSoundFx = document.getElementById('settingSoundFx');
+        if (settingSoundFx) settingSoundFx.checked = window.settingsState.soundFx !== false;
+
+        // 9. Aura Style
+        const settingAuraStyle = document.getElementById('settingAuraStyle');
+        const auraStyleDesc = document.getElementById('auraStyleDesc');
+        const curAura = window.settingsState.auraStyle || 'dynamic';
+        document.body.setAttribute('data-aura', curAura);
+        if (settingAuraStyle) settingAuraStyle.value = curAura;
+        if (auraStyleDesc) auraStyleDesc.textContent = AURA_DESCS[curAura] || AURA_DESCS.dynamic;
+
+        // 10. AI Service for Live Iframe
+        const aiKey = window.settingsState.aiService || 'gemini';
+        const aiService = AI_SERVICES[aiKey] || AI_SERVICES.gemini;
+
+        const aiIframe = document.getElementById('aiIframe');
+        const aiTitle = document.getElementById('aiModalHeaderTitle');
+        const aiExternalBtn = document.getElementById('aiExternalLinkBtn');
+        const aiQuickSelect = document.getElementById('aiQuickSelector');
+        const settingAiSelect = document.getElementById('settingAiSelect');
+
+        if (aiTitle) aiTitle.textContent = aiService.name;
+        if (aiExternalBtn) aiExternalBtn.href = aiService.url;
+        if (aiQuickSelect) aiQuickSelect.value = aiKey;
+        if (settingAiSelect) settingAiSelect.value = aiKey;
+        if (aiIframe && aiIframe.getAttribute('data-current-src') !== aiService.url) {
+            aiIframe.setAttribute('data-current-src', aiService.url);
+            aiIframe.src = aiService.url;
+        }
+
+        persistSettings();
     }
 
     applySettings();
 
     function openSettingsModal() {
         if (!settingsModalBackdrop) return;
+        window.lenis?.stop();
+        playTapticAudio('open');
         settingsModalBackdrop.classList.add('is-open');
         settingsModalBackdrop.setAttribute('aria-hidden', 'false');
         if (window.settingsState.hapticMode && 'vibrate' in navigator) {
@@ -1912,8 +3262,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function closeSettingsModal() {
         if (!settingsModalBackdrop) return;
+        playTapticAudio('close');
         settingsModalBackdrop.classList.remove('is-open');
         settingsModalBackdrop.setAttribute('aria-hidden', 'true');
+        window.lenis?.start();
     }
 
     if (settingsBtn) {
@@ -1930,18 +3282,61 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    if (settingPerfMode) {
-        settingPerfMode.addEventListener('change', (e) => {
-            window.settingsState.perfMode = e.target.checked;
-            localStorage.setItem('nextgen_perf_mode', e.target.checked);
-            applySettings();
+    function setPerfLevel(lvl) {
+        lvl = Math.max(0, Math.min(2, parseInt(lvl, 10) || 0));
+        window.settingsState.perfLevel = lvl;
+        playTapticAudio('click');
+        applySettings();
+        if (window.settingsState.hapticMode && 'vibrate' in navigator) {
+            try { navigator.vibrate(lvl === 2 ? 22 : 10); } catch (_) {}
+        }
+    }
+
+    function setMotionBlurStrength(val) {
+        if (window.settingsState.perfLevel !== 0) return; // Unlocked only in Quality mode
+        val = Math.max(1, Math.min(7, parseFloat(val) || 3.0));
+        window.settingsState.motionBlurStrength = val;
+        applySettings();
+        if (window.settingsState.hapticMode && 'vibrate' in navigator) {
+            try { navigator.vibrate(8); } catch (_) {}
+        }
+    }
+
+    if (settingPerfSlider) {
+        settingPerfSlider.addEventListener('input', (e) => {
+            setPerfLevel(e.target.value);
+        });
+    }
+
+    if (stepMarks) {
+        stepMarks.forEach(mark => {
+            mark.addEventListener('click', () => {
+                const step = mark.getAttribute('data-step');
+                if (step !== null) setPerfLevel(step);
+            });
+        });
+    }
+
+    if (settingBlurSlider) {
+        settingBlurSlider.addEventListener('input', (e) => {
+            setMotionBlurStrength(e.target.value);
+        });
+    }
+
+    if (blurStepMarks) {
+        blurStepMarks.forEach(mark => {
+            mark.addEventListener('click', () => {
+                const bVal = mark.getAttribute('data-blur');
+                if (bVal !== null) setMotionBlurStrength(bVal);
+            });
         });
     }
 
     if (settingTiltMode) {
         settingTiltMode.addEventListener('change', (e) => {
             window.settingsState.tiltMode = e.target.checked;
-            localStorage.setItem('nextgen_tilt_mode', e.target.checked);
+            playTapticAudio('click');
+            persistSettings();
             if (!e.target.checked) {
                 document.querySelectorAll('.liquid-card').forEach(c => c.style.transform = '');
             }
@@ -1951,7 +3346,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (settingHapticMode) {
         settingHapticMode.addEventListener('change', (e) => {
             window.settingsState.hapticMode = e.target.checked;
-            localStorage.setItem('nextgen_haptic_mode', e.target.checked);
+            playTapticAudio('click');
+            persistSettings();
             if (e.target.checked && 'vibrate' in navigator) {
                 try { navigator.vibrate(12); } catch (_) {}
             }
@@ -1961,23 +3357,74 @@ document.addEventListener('DOMContentLoaded', () => {
     if (settingTimerDisplay) {
         settingTimerDisplay.addEventListener('change', (e) => {
             window.settingsState.timerDisplay = e.target.checked;
-            localStorage.setItem('nextgen_timer_display', e.target.checked);
+            playTapticAudio('click');
             applySettings();
         });
     }
 
     if (accentColorPicker) {
-        accentColorPicker.querySelectorAll('.color-dot').forEach(dot => {
+        accentColorPicker.querySelectorAll('.color-dot:not(.custom-color-dot)').forEach(dot => {
             dot.addEventListener('click', () => {
                 const colorKey = dot.getAttribute('data-color');
                 if (!colorKey) return;
                 window.settingsState.accentColor = colorKey;
-                localStorage.setItem('nextgen_accent_color', colorKey);
+                window.settingsState.auraStyle = 'dynamic';
+                playTapticAudio('click');
                 applySettings();
                 if (window.settingsState.hapticMode && 'vibrate' in navigator) {
                     try { navigator.vibrate(10); } catch (_) {}
                 }
             });
+        });
+    }
+
+    const customColorInput = document.getElementById('customColorInput');
+    if (customColorInput) {
+        const handleCustomColor = (e) => {
+            const hex = e.target.value;
+            if (!hex) return;
+            window.settingsState.accentColor = 'custom';
+            window.settingsState.customAccentHex = hex;
+            window.settingsState.auraStyle = 'dynamic';
+            playTapticAudio('click');
+            applySettings();
+        };
+        customColorInput.addEventListener('input', handleCustomColor);
+        customColorInput.addEventListener('change', handleCustomColor);
+    }
+
+    const settingAnimPreset = document.getElementById('settingAnimPreset');
+    if (settingAnimPreset) {
+        settingAnimPreset.addEventListener('change', (e) => {
+            window.settingsState.animPreset = e.target.value;
+            playTapticAudio('click');
+            applySettings();
+        });
+    }
+
+    const settingSoundFx = document.getElementById('settingSoundFx');
+    if (settingSoundFx) {
+        settingSoundFx.addEventListener('change', (e) => {
+            window.settingsState.soundFx = e.target.checked;
+            if (e.target.checked) playTapticAudio('click');
+            persistSettings();
+        });
+    }
+
+    const settingAuraStyle = document.getElementById('settingAuraStyle');
+    if (settingAuraStyle) {
+        settingAuraStyle.addEventListener('change', (e) => {
+            window.settingsState.auraStyle = e.target.value;
+            playTapticAudio('click');
+            applySettings();
+        });
+    }
+
+    const settingAiSelect = document.getElementById('settingAiSelect');
+    if (settingAiSelect) {
+        settingAiSelect.addEventListener('change', (e) => {
+            setAiService(e.target.value);
+            playTapticAudio('click');
         });
     }
 });
