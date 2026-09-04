@@ -9,6 +9,11 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    -webkit-tap-highlight-color: transparent;
+}
+
+button, a, input, select, .liquid-card, .nav-tab, .color-dot {
+    touch-action: manipulation;
 }
 
 :root {
@@ -155,19 +160,47 @@ body {
 }
 
 .avatar-btn.is-playing {
-    box-shadow: 0 0 0 3px var(--purple-accent), 0 0 22px var(--purple-glow);
-    animation: avatarAudioPulse 1.6s infinite ease-in-out;
+    box-shadow: 0 0 0 3px var(--purple-accent), 0 0 26px var(--purple-glow), 0 0 52px var(--purple-glow) !important;
+    animation: avatarAudioPulse 1.6s infinite ease-in-out !important;
 }
 
 @keyframes avatarAudioPulse {
     0%, 100% {
         transform: scale(1.03);
-        box-shadow: 0 0 0 3px var(--purple-accent), 0 0 16px var(--purple-glow);
+        box-shadow: 0 0 0 3px var(--purple-accent), 0 0 20px var(--purple-glow), 0 0 45px var(--purple-glow);
     }
     50% {
-        transform: scale(1.08);
-        box-shadow: 0 0 0 4px var(--purple-accent), 0 0 28px var(--purple-glow);
+        transform: scale(1.09);
+        box-shadow: 0 0 0 4.5px var(--purple-accent), 0 0 36px var(--purple-glow), 0 0 75px var(--purple-glow);
     }
+}
+
+body.audio-playing {
+    background-image: radial-gradient(circle at 50% 120px, var(--aura-glow-1, rgba(192, 88, 255, 0.38)) 0%, var(--aura-glow-2, rgba(140, 50, 255, 0.24)) 340px, rgba(13, 13, 17, 0.98) 720px, #090c10 880px) !important;
+}
+
+body.audio-playing .avatar-container {
+    position: relative;
+}
+
+body.audio-playing .avatar-container::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--purple-glow, rgba(192, 88, 255, 0.65)) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+    animation: avatarAmbientAura 1.6s infinite ease-in-out;
+}
+
+@keyframes avatarAmbientAura {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.55; }
+    50% { transform: translate(-50%, -50%) scale(1.4); opacity: 1; }
 }
 
 .avatar-img {
@@ -495,16 +528,18 @@ body {
     opacity: 0.8;
 }
 
-.liquid-card:hover {
-    border-color: var(--card-border-hover);
-    box-shadow: 
-        inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.45),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.06),
-        0 24px 50px -10px rgba(0, 0, 0, 0.9);
-    background: linear-gradient(180deg, rgba(38, 38, 44, 0.9) 0%, rgba(22, 22, 26, 0.96) 100%);
-}
+@media (hover: hover) {
+    .liquid-card:hover {
+        border-color: var(--card-border-hover);
+        box-shadow: 
+            inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.45),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+            0 24px 50px -10px rgba(0, 0, 0, 0.9);
+        background: linear-gradient(180deg, rgba(38, 38, 44, 0.9) 0%, rgba(22, 22, 26, 0.96) 100%);
+    }
 
-.liquid-card:hover .liquid-lens { opacity: 1; }
+    .liquid-card:hover .liquid-lens { opacity: 1; }
+}
 
 .liquid-card.is-pressed,
 .liquid-card:active {
@@ -517,7 +552,7 @@ body {
 
 /* The original tile disappears visually while its modal window is active, but remains interactive for instant relaunch */
 .liquid-card.is-opening {
-    opacity: 0 !important;
+    opacity: 0;
     visibility: visible !important;
     transform: none !important;
 }
@@ -559,10 +594,12 @@ body {
     -webkit-user-drag: none !important;
 }
 
-.liquid-card:hover .card-cover-img {
-    transform: scale(1.05) translateY(-3px);
-    box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.7), 0 0 16px rgba(255, 255, 255, 0.12);
-    filter: brightness(1.08) saturate(1.05);
+@media (hover: hover) {
+    .liquid-card:hover .card-cover-img {
+        transform: scale(1.05) translateY(-3px);
+        box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.7), 0 0 16px rgba(255, 255, 255, 0.12);
+        filter: brightness(1.08) saturate(1.05);
+    }
 }
 
 .card-cover-box::after {
@@ -582,8 +619,10 @@ body {
     mix-blend-mode: overlay;
 }
 
-.liquid-card:hover .card-cover-box::after {
-    opacity: 1;
+@media (hover: hover) {
+    .liquid-card:hover .card-cover-box::after {
+        opacity: 1;
+    }
 }
 
 /* Schedule Card Header Badge (Lesson number & time) */
@@ -659,9 +698,11 @@ body {
     transition: transform 0.3s var(--apple-ease);
 }
 
-.liquid-card:hover .card-icon-placeholder {
-    transform: scale(1.06) translateY(-2px);
-    color: #fff;
+@media (hover: hover) {
+    .liquid-card:hover .card-icon-placeholder {
+        transform: scale(1.06) translateY(-2px);
+        color: #fff;
+    }
 }
 
 .card-icon-placeholder svg {
@@ -672,34 +713,44 @@ body {
 /* Non-clickable Schedule Cards (Технології, Інформатика pure, тощо) */
 .schedule-card.is-no-book {
     cursor: default !important;
-    opacity: 0.72;
-    filter: grayscale(20%);
+    opacity: 0.94;
 }
 
 .schedule-card.is-no-book:hover {
     transform: none !important;
-    border-color: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(255, 255, 255, 0.16) !important;
     box-shadow: 0 16px 36px -12px rgba(0, 0, 0, 0.5) !important;
 }
 
 .schedule-card.is-no-book .card-title {
-    color: rgba(255, 255, 255, 0.58) !important;
+    color: rgba(255, 255, 255, 0.92) !important;
 }
 
 .lesson-no-book-badge {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
     font-family: var(--font-sf);
-    font-size: 9.5px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    text-transform: uppercase;
-    padding: 2px 7px;
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.1px;
+    padding: 3px 10px;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.45);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    margin-top: 5px;
+    color: rgba(255, 255, 255, 0.62);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    margin-top: 6px;
     pointer-events: none;
+    white-space: nowrap;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.lesson-no-book-badge .no-book-svg {
+    opacity: 0.72;
+    flex-shrink: 0;
 }
 
 /* Dual / Split Subject Schedule Cards (Інформатика / Укр.літ, Алгебра / Геометрія, тощо) */
@@ -771,11 +822,13 @@ body {
     position: relative;
     z-index: 3;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     width: 100%;
     padding: 0 6px;
     pointer-events: none;
+    text-align: center;
 }
 
 .card-title {
@@ -829,9 +882,6 @@ body {
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
-    /* The glass must be present on the first launch frame. The modal itself
-       carries the motion; fading this layer would delay backdrop-filter. */
-    transition: visibility 0s linear 0.26s;
 }
 
 .modal-backdrop::before {
@@ -938,7 +988,6 @@ body[data-perf-level="2"] * {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
-    transition-delay: 0s;
 }
 
 .modal-backdrop.is-open::before {
@@ -947,7 +996,7 @@ body[data-perf-level="2"] * {
 
 .modal-backdrop.is-open.is-closing::before {
     opacity: 0;
-    transition: opacity 260ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    transition: opacity var(--close-duration, 260ms) cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
 /* While an app is dismissing, cards remain reachable for a parallel launch */
@@ -956,13 +1005,28 @@ body[data-perf-level="2"] * {
 }
 
 .modal-closing-clone {
+    position: fixed !important;
+    z-index: 2 !important;
     pointer-events: none !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    backdrop-filter: blur(24px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%), rgba(28, 28, 34, 0.75) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.35), 0 16px 40px -8px rgba(0, 0, 0, 0.65) !important;
+    will-change: left, top, width, height, border-radius, opacity, filter;
+}
+
+.modal-closing-clone .modal-launch-view {
+    display: flex !important;
 }
 
 /* The glass container itself — semi-transparent, NOT opaque */
 .modal-container {
     position: relative;
-    z-index: 1;
+    z-index: 10;
     width: 100%;
     max-width: 876px;
     min-height: 447px;
@@ -1401,15 +1465,45 @@ a.book-preview-card:active {
 }
 
 @media (max-width: 768px) {
+    html, body {
+        overscroll-behavior-y: none;
+    }
+
     body {
-        padding: 12px 14px 28px;
+        padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(28px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    }
+
+    .app-container.modal-open {
+        transform: scale(0.965) translateY(-6px);
+        filter: brightness(0.72) saturate(1.1);
+        transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), filter 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .app-container.modal-open.modal-closing {
+        transform: scale(1) translateY(0);
+        filter: brightness(1) saturate(1);
+        transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), filter 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .liquid-card {
+        backdrop-filter: blur(14px) saturate(140%) !important;
+        -webkit-backdrop-filter: blur(14px) saturate(140%) !important;
+    }
+
+    .liquid-lens {
+        display: none !important;
+    }
+
+    .card-cover-box::after {
+        display: none !important;
     }
     
     .top-header {
         flex-wrap: wrap;
-        gap: 12px;
+        gap: 10px;
         justify-content: space-between;
         align-items: center;
+        width: 100%;
     }
     
     .avatar-container { order: 1; }
@@ -1421,34 +1515,46 @@ a.book-preview-card:active {
         height: auto;
         border-radius: 20px;
         flex-direction: column;
-        align-items: center;
+        align-items: stretch;
         justify-content: center;
         gap: 6px;
-        padding: 8px 8px 7px;
-        overflow: visible;
+        padding: 6px 6px 7px;
+        overflow: hidden;
     }
 
     .nav-tabs {
-        flex-wrap: wrap;
-        justify-content: center;
+        display: flex;
+        flex-wrap: nowrap;
+        justify-content: flex-start;
         align-items: center;
-        gap: 4px 6px;
+        gap: 4px;
         width: 100%;
-        height: auto;
+        height: 38px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+        padding: 2px;
+    }
+
+    .nav-tabs::-webkit-scrollbar {
+        display: none;
     }
 
     .nav-tab {
-        padding: 6px 11px;
-        border-radius: 10px;
+        flex-shrink: 0;
+        padding: 6px 12px;
+        border-radius: 12px;
+        white-space: nowrap;
     }
 
     .tab-text {
-        font-size: 13px;
+        font-size: 12.5px;
         letter-spacing: 0.2px;
     }
 
     .nav-indicator {
-        border-radius: 10px;
+        border-radius: 12px;
     }
 
     .nav-divider {
@@ -1457,12 +1563,12 @@ a.book-preview-card:active {
 
     .nav-timer {
         flex-direction: row;
-        gap: 5px;
+        gap: 6px;
         align-items: center;
         justify-content: center;
         width: 100%;
-        padding-top: 6px;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding-top: 5px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
     }
 
     .timer-label {
@@ -1514,8 +1620,14 @@ a.book-preview-card:active {
         line-height: 1.25;
     }
 
-    .modal-backdrop {
-        padding: 16px;
+    .modal-backdrop,
+    .calc-modal-backdrop,
+    .schedule-modal-backdrop,
+    .alarm-modal-backdrop,
+    .ai-modal-backdrop,
+    .settings-modal-backdrop,
+    .split-modal-backdrop {
+        padding: 10px;
     }
 
     .modal-backdrop::before {
@@ -1536,16 +1648,20 @@ a.book-preview-card:active {
     .settings-modal-container,
     .split-modal-container {
         border-radius: 24px !important;
+        max-height: calc(100dvh - 20px) !important;
+        overscroll-behavior-y: contain;
     }
 
     .modal-container {
-        padding: 22px 18px 20px;
+        padding: 22px 16px 28px;
         min-height: auto;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         overflow: hidden;
+        width: 100%;
+        max-width: min(390px, calc(100vw - 20px));
     }
 
     .modal-close-btn {
@@ -1561,7 +1677,7 @@ a.book-preview-card:active {
         flex-direction: column-reverse;
         gap: 12px;
         width: 100%;
-        max-width: 290px;
+        max-width: 100%;
         margin: 0 auto;
         display: flex;
         align-items: center;
@@ -1647,15 +1763,18 @@ a.book-preview-card:active {
 
     .modal-options-column {
         width: 100%;
-        max-width: 290px;
+        max-width: 100%;
         margin-top: 0;
         min-height: auto !important;
-        height: auto !important;
-        justify-content: flex-start !important;
+        max-height: 44dvh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-y: contain;
         gap: 8px;
         display: flex;
         flex-direction: column;
         align-items: stretch;
+        padding: 2px;
     }
 
     .modal-gdz-list {
@@ -1881,20 +2000,22 @@ a.book-preview-card:active {
 .calc-solve-btn {
     width: 100%;
     padding: 14px;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    border: none;
+    background: linear-gradient(135deg, var(--purple-accent, #c058ff), color-mix(in srgb, var(--purple-accent, #c058ff) 80%, #000));
+    border: 1px solid rgba(255, 255, 255, 0.22);
     border-radius: 14px;
-    color: #fff;
+    color: var(--accent-contrast-text, #ffffff);
     font-family: var(--font-sf);
     font-size: 15px;
     font-weight: 600;
     cursor: pointer;
+    box-shadow: 0 8px 24px -4px var(--purple-glow, rgba(192, 88, 255, 0.35));
     transition: all 0.2s;
     user-select: none;
 }
 
 .calc-solve-btn:hover {
     filter: brightness(1.1);
+    box-shadow: 0 10px 28px -2px var(--purple-glow, rgba(192, 88, 255, 0.45));
     transform: scale(1.01);
 }
 
@@ -1986,6 +2107,46 @@ a.book-preview-card:active {
     color: #fff;
     font-size: 20px;
     font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+}
+
+@media (max-width: 768px) {
+    .calc-modal-backdrop {
+        padding: 10px;
+    }
+    .calc-modal-container {
+        width: 100%;
+        max-width: min(440px, calc(100vw - 20px));
+        max-height: calc(100dvh - 20px);
+        border-radius: 22px;
+    }
+    .calc-modal-header {
+        padding: 12px 14px;
+    }
+    .calc-title {
+        font-size: 15px;
+    }
+    .calc-body {
+        padding: 14px 14px 18px;
+        gap: 12px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-y: contain;
+    }
+    .calc-op-btn {
+        min-height: 48px;
+        font-size: 22px;
+        border-radius: 12px;
+    }
+    .calc-input {
+        padding: 12px 14px;
+        font-size: 18px;
+        border-radius: 12px;
+    }
+    .calc-solve-btn {
+        padding: 13px;
+        font-size: 15px;
+        border-radius: 12px;
+    }
 }
 
 /* ==========================================================================
@@ -2208,6 +2369,7 @@ a.book-preview-card:active {
 
     .schedule-modal-container {
         max-height: 92vh;
+        max-height: 92dvh;
         border-radius: 22px;
     }
 
@@ -2230,6 +2392,7 @@ a.book-preview-card:active {
     .schedule-image-viewer {
         padding: 10px;
         max-height: calc(92vh - 65px);
+        max-height: calc(92dvh - 65px);
     }
 }
 
@@ -2375,6 +2538,7 @@ a.book-preview-card:active {
     }
     .alarm-modal-container {
         max-height: 92vh;
+        max-height: 92dvh;
         border-radius: 22px;
     }
     .alarm-map-wrapper {
@@ -2585,7 +2749,14 @@ a.book-preview-card:active {
 }
 
 .split-modal-backdrop.is-closing {
+    opacity: 0;
     pointer-events: none !important;
+}
+
+.split-modal-backdrop.is-closing .split-modal-container {
+    transform: scale(0.94) translateY(12px);
+    opacity: 0;
+    transition: transform 0.22s cubic-bezier(0.32, 0, 0.15, 1), opacity 0.2s ease-out;
 }
 
 .split-modal-container {
@@ -2867,7 +3038,7 @@ a.book-preview-card:active {
     background: var(--purple-accent, #c058ff);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 12px;
-    color: var(--accent-contrast-text, #ffffff);
+    color: var(--accent-contrast-text, #ffffff) !important;
     text-decoration: none;
     font-size: 13px;
     font-weight: 600;
@@ -2876,11 +3047,15 @@ a.book-preview-card:active {
     margin-top: 4px;
 }
 
+.instruction-ext-btn span {
+    color: inherit !important;
+}
+
 .instruction-ext-btn:hover {
     filter: brightness(1.1);
     transform: translateY(-2px);
     box-shadow: 0 6px 22px var(--purple-glow, rgba(192, 88, 255, 0.5));
-    color: var(--accent-contrast-text, #ffffff);
+    color: var(--accent-contrast-text, #ffffff) !important;
 }
 
 .instruction-ext-btn:active {
@@ -2891,7 +3066,7 @@ a.book-preview-card:active {
     width: 17px;
     height: 17px;
     flex-shrink: 0;
-    stroke: currentColor;
+    stroke: currentColor !important;
 }
 
 @media (max-width: 768px) {
@@ -2900,7 +3075,9 @@ a.book-preview-card:active {
     }
     .ai-modal-container {
         height: 90vh;
+        height: 90dvh;
         max-height: 92vh;
+        max-height: 92dvh;
         border-radius: 22px;
     }
     .ai-modal-header {
@@ -2940,6 +3117,17 @@ a.book-preview-card:active {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
+}
+
+.settings-modal-backdrop.is-closing {
+    opacity: 0;
+    pointer-events: none !important;
+}
+
+.settings-modal-backdrop.is-closing .settings-modal-container {
+    transform: scale(0.94) translateY(14px);
+    opacity: 0;
+    transition: transform 0.24s cubic-bezier(0.32, 0, 0.15, 1), opacity 0.22s ease-out;
 }
 
 .settings-modal-container {
@@ -3335,6 +3523,37 @@ a.book-preview-card:active {
     box-shadow: 0 0 14px var(--purple-glow, rgba(192, 88, 255, 0.35));
 }
 
+@media (max-width: 768px) {
+    .settings-modal-backdrop {
+        padding: 10px;
+    }
+    .settings-modal-container {
+        width: 100%;
+        max-width: min(440px, calc(100vw - 20px));
+        max-height: calc(100dvh - 20px);
+        border-radius: 22px;
+    }
+    .settings-modal-header {
+        padding: 14px 16px;
+    }
+    .settings-modal-body {
+        padding: 12px 14px 20px;
+        gap: 14px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-y: contain;
+    }
+    .settings-group-title {
+        font-size: 11px;
+    }
+    .setting-label {
+        font-size: 13.5px;
+    }
+    .setting-desc {
+        font-size: 11px;
+    }
+}
+
 /* Ambient Background Aura Styles */
 body[data-aura="dynamic"] {
     background-color: #090c10 !important;
@@ -3418,13 +3637,21 @@ html.lenis, html.lenis body {
     color: rgba(255, 255, 255, 0.45);
 }
 
-body:not(.perf-mode) .settings-modal-container {
-    filter: blur(var(--motion-blur-val, 4px));
-    transition: transform 0.36s cubic-bezier(0.16, 1, 0.3, 1), filter 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+@media (min-width: 769px) and (pointer: fine) {
+    body:not(.perf-mode) .settings-modal-container {
+        filter: blur(var(--motion-blur-val, 4px));
+        transition: transform 0.36s cubic-bezier(0.16, 1, 0.3, 1), filter 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    body:not(.perf-mode) .settings-modal-backdrop.is-open .settings-modal-container {
+        filter: blur(0px);
+    }
 }
 
-body:not(.perf-mode) .settings-modal-backdrop.is-open .settings-modal-container {
-    filter: blur(0px);
+@media (max-width: 768px), (pointer: coarse) {
+    .settings-modal-container {
+        filter: none !important;
+    }
 }
 
 /* ==========================================================================
@@ -3474,3 +3701,76 @@ body:not(.perf-mode) .settings-modal-backdrop.is-open .settings-modal-container 
     letter-spacing: 0.2px;
     white-space: nowrap;
 }
+
+@media (max-width: 768px) {
+    .glass-toast {
+        bottom: 24px;
+        padding: 8px 18px;
+        max-width: calc(100vw - 28px);
+        white-space: normal;
+        text-align: center;
+    }
+}
+
+/* ==========================================================================
+   MOBILE ERGONOMICS: STICKY HOVER SUPPRESSION & TACTILE MICRO-SPRING BOUNCE
+   ========================================================================== */
+@media (hover: none) and (pointer: coarse) {
+    /* Completely eliminate sticky hover states on touchscreens */
+    .nav-tab:hover {
+        transform: none !important;
+    }
+    .modal-option-btn:hover,
+    .modal-book-link-btn:hover,
+    .calc-op-btn:hover,
+    .calc-solve-btn:hover,
+    .seg-btn:hover,
+    .split-option-btn:hover,
+    .color-dot:hover,
+    .instruction-ext-btn:hover,
+    .settings-btn:hover {
+        transform: none !important;
+        box-shadow: none !important;
+        filter: none !important;
+    }
+}
+
+/* iOS Tactile Micro-Spring active feedback */
+.seg-btn:active,
+.calc-op-btn:active,
+.calc-solve-btn:active,
+.theme-pill:active,
+.step-mark:active,
+.instruction-ext-btn:active,
+.color-dot:active,
+.modal-option-btn:active,
+.modal-book-link-btn:active {
+    transform: scale(0.95) !important;
+    transition: transform 0.09s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* ==========================================================================
+   ACCESSIBILITY: LIQUID GLASS FOCUS VISIBLE (Keyboard Navigation)
+   ========================================================================== */
+.nav-tab:focus-visible,
+.settings-btn:focus-visible,
+.avatar-btn:focus-visible,
+.liquid-card:focus-visible,
+.modal-close-btn:focus-visible,
+.calc-modal-close:focus-visible,
+.schedule-modal-close:focus-visible,
+.alarm-modal-close:focus-visible,
+.ai-modal-close:focus-visible,
+.settings-modal-close:focus-visible,
+.split-modal-close:focus-visible,
+.calc-op-btn:focus-visible,
+.calc-solve-btn:focus-visible,
+.seg-btn:focus-visible,
+.modal-option-btn:focus-visible,
+.modal-book-link-btn:focus-visible,
+.color-dot:focus-visible,
+.instruction-ext-btn:focus-visible {
+    outline: none !important;
+    box-shadow: 0 0 0 2.5px var(--purple-accent, #c058ff), 0 0 14px var(--purple-glow, rgba(192, 88, 255, 0.45)) !important;
+}
+

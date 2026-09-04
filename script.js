@@ -29,14 +29,27 @@ document.addEventListener('DOMContentLoaded', () => {
         return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     }
 
+    function getContrastText(hex) {
+        if (!hex) return '#ffffff';
+        const rgb = hexToRgb(hex);
+        const lum = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b);
+        return lum > 160 ? '#0b0b10' : '#ffffff';
+    }
+
     function getAccentConfig(state) {
         if (state.accentColor === 'custom' && state.customAccentHex) {
             return {
                 accent: state.customAccentHex,
-                glow: hexToGlow(state.customAccentHex, 0.45)
+                glow: hexToGlow(state.customAccentHex, 0.45),
+                contrast: getContrastText(state.customAccentHex)
             };
         }
-        return ACCENT_PALETTE[state.accentColor] || ACCENT_PALETTE.purple;
+        const p = ACCENT_PALETTE[state.accentColor] || ACCENT_PALETTE.purple;
+        return {
+            accent: p.accent,
+            glow: p.glow,
+            contrast: getContrastText(p.accent)
+        };
     }
 
     const AURA_PALETTES = {
@@ -87,8 +100,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const ANIM_PRESETS = {
         cinematic: {
-            name: '«Кінематограф Apple»',
-            desc: '«Кінематограф Apple»: збалансована пружина з м\'яким розквітом',
+            name: 'Bounce',
+            desc: 'Bounce: збалансована пружинна анімація з м\'яким розквітом',
             openDur: 380,
             closeDur: 260,
             openMobileDur: 330,
@@ -97,8 +110,8 @@ document.addEventListener('DOMContentLoaded', () => {
             closeEase: 'cubic-bezier(0.32, 0, 0.15, 1)'
         },
         fast: {
-            name: '«Блискавка»',
-            desc: '«Блискавка»: надшвидкий відгук та різке відкриття для продуктивності',
+            name: 'Flash',
+            desc: 'Flash: швидкий і чіткий перехід для високої продуктивності',
             openDur: 220,
             closeDur: 160,
             openMobileDur: 200,
@@ -107,8 +120,8 @@ document.addEventListener('DOMContentLoaded', () => {
             closeEase: 'cubic-bezier(0.25, 1, 0.5, 1)'
         },
         liquid: {
-            name: '«Рідка Крапля»',
-            desc: '«Рідка Крапля»: соковитий перелив рідкого скла з відчутним відскоком',
+            name: 'Bounce 2',
+            desc: 'Bounce 2: соковитий перелив рідкого скла з виразним відскоком',
             openDur: 480,
             closeDur: 320,
             openMobileDur: 420,
@@ -117,8 +130,8 @@ document.addEventListener('DOMContentLoaded', () => {
             closeEase: 'cubic-bezier(0.32, 0, 0.15, 1)'
         },
         slow: {
-            name: '«Невагомість»',
-            desc: '«Невагомість»: гіпнотичне плавне ширяння з глибоким уповільненням',
+            name: 'Sweet',
+            desc: 'Sweet: м\'яка заспокійлива анімація з глибоким уповільненням',
             openDur: 620,
             closeDur: 420,
             openMobileDur: 520,
@@ -127,8 +140,8 @@ document.addEventListener('DOMContentLoaded', () => {
             closeEase: 'cubic-bezier(0.25, 1, 0.35, 1)'
         },
         instant: {
-            name: '«Миттєвий 120 FPS»',
-            desc: '«Миттєвий 120 FPS»: майже миттєве розгортання без затримок',
+            name: 'Flash 2',
+            desc: 'Flash 2: надшвидке розгортання практично без затримок',
             openDur: 140,
             closeDur: 110,
             openMobileDur: 130,
@@ -139,9 +152,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const AURA_DESCS = {
-        dynamic: '✨ Синхронно з акцентом: колір фону автоматично змінюється разом із темою',
-        aurora: '«Північна Аврора»: свіжі смарагдово-аквамаринові відблиски',
-        oled: '«Глибокий онікс»: бездоганний чорний OLED для максимального контрасту'
+        dynamic: 'В колір теми: сяйво фону адаптується до вибраного акценту',
+        oled: 'Без сяйва (OLED): чистий глибокий чорний фон без підсвічування'
     };
 
     function playTapticAudio(type = 'click') {
@@ -214,7 +226,8 @@ document.addEventListener('DOMContentLoaded', () => {
             scheduleView: 'bells',
             animPreset: 'cinematic',
             soundFx: true,
-            auraStyle: 'dynamic'
+            auraStyle: 'dynamic',
+            fastSwitch: false
         };
 
         try {
@@ -222,6 +235,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (raw) {
                 const parsed = JSON.parse(raw);
                 if (parsed && typeof parsed === 'object') {
+                    if (typeof parsed.motionBlurStrength === 'number') {
+                        parsed.motionBlurStrength = Math.max(0, Math.min(7, parsed.motionBlurStrength));
+                    }
+                    if (parsed.auraStyle && !AURA_DESCS[parsed.auraStyle]) {
+                        parsed.auraStyle = 'dynamic';
+                    }
+                    if (parsed.animPreset && !ANIM_PRESETS[parsed.animPreset]) {
+                        parsed.animPreset = 'cinematic';
+                    }
                     return Object.assign({}, defaults, parsed);
                 }
             }
@@ -233,7 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
             else if (localStorage.getItem('nextgen_perf_mode') === 'true') defaults.perfLevel = 1;
 
             const bStr = parseFloat(localStorage.getItem('nextgen_blur_strength'));
-            if (!isNaN(bStr) && bStr >= 1 && bStr <= 7) defaults.motionBlurStrength = bStr;
+            if (!isNaN(bStr) && bStr >= 0 && bStr <= 7) defaults.motionBlurStrength = bStr;
 
             const tMode = localStorage.getItem('nextgen_tilt_mode');
             if (tMode !== null) defaults.tiltMode = tMode === 'true';
@@ -265,6 +287,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const aura = localStorage.getItem('nextgen_aura_style');
             if (aura && AURA_DESCS[aura]) defaults.auraStyle = aura;
             else defaults.auraStyle = 'dynamic';
+
+            const fsMode = localStorage.getItem('nextgen_fast_switch');
+            if (fsMode !== null) defaults.fastSwitch = fsMode === 'true';
         } catch (_) {}
 
         return defaults;
@@ -298,6 +323,7 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('nextgen_anim_preset', window.settingsState.animPreset || 'cinematic');
             localStorage.setItem('nextgen_sound_fx', String(window.settingsState.soundFx));
             localStorage.setItem('nextgen_aura_style', window.settingsState.auraStyle || 'dynamic');
+            localStorage.setItem('nextgen_fast_switch', String(window.settingsState.fastSwitch));
         } catch (_) {}
     }
 
@@ -306,6 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const initialAura = getAuraConfig(window.settingsState);
     document.documentElement.style.setProperty('--purple-accent', initialConfig.accent);
     document.documentElement.style.setProperty('--purple-glow', initialConfig.glow);
+    document.documentElement.style.setProperty('--accent-contrast-text', initialConfig.contrast);
     document.documentElement.style.setProperty('--aura-glow-1', initialAura.glow1);
     document.documentElement.style.setProperty('--aura-glow-2', initialAura.glow2);
     document.documentElement.style.setProperty('--hero-reflection-color', initialAura.reflection);
@@ -335,7 +362,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateScrollMotionBlur() {
         if (!mainContent) return;
-        const isQuality = (window.settingsState?.perfLevel ?? 0) === 0;
+        const isMobileDevice = window.innerWidth <= 768 || window.matchMedia('(pointer: coarse)').matches;
+        const isQuality = !isMobileDevice && (window.settingsState?.perfLevel ?? 0) === 0;
         if (!isQuality || modalState !== 'closed') {
             if (currentScrollBlur !== 0) {
                 currentScrollBlur = 0;
@@ -356,6 +384,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const strength = window.settingsState?.motionBlurStrength ?? 3.0;
+        if (strength <= 0) {
+            if (currentScrollBlur !== 0) {
+                currentScrollBlur = 0;
+                mainContent.style.filter = '';
+            }
+            return;
+        }
         const targetBlur = Math.min(4.5, (vel / 2.5) * (strength / 3.0));
         currentScrollBlur += (targetBlur - currentScrollBlur) * 0.35;
 
@@ -369,14 +404,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
         if (typeof Lenis !== 'undefined') {
+            const isMobileDevice = window.innerWidth <= 768 || window.matchMedia('(pointer: coarse)').matches;
             lenis = new Lenis({
-                duration: 1.15,
+                duration: isMobileDevice ? 0.7 : 1.15,
                 easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
                 orientation: 'vertical',
                 gestureOrientation: 'vertical',
                 smoothWheel: true,
                 wheelMultiplier: 1.0,
-                touchMultiplier: 1.2,
+                touchMultiplier: 1.0,
+                syncTouch: false,
                 infinite: false
             });
 
@@ -550,10 +587,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const sx = Math.max(0.08, tabRect.width / targetRect.width);
         const sy = Math.max(0.04, tabRect.height / targetRect.height);
 
-        const isMobile = window.innerWidth <= 768;
+        const isMobile = window.innerWidth <= 768 || window.matchMedia('(pointer: coarse)').matches;
         const targetRadius = isMobile ? 22 : 26;
 
-        const hasMotionBlur = (window.settingsState?.perfLevel ?? 0) === 0;
+        const hasMotionBlur = !isMobile && (window.settingsState?.perfLevel ?? 0) === 0 && (window.settingsState?.motionBlurStrength ?? 0) > 0;
         const blurStrength = window.settingsState?.motionBlurStrength ?? 3.0;
         const peakBlur = blurStrength * 2.0;
 
@@ -656,26 +693,36 @@ document.addEventListener('DOMContentLoaded', () => {
         const sx = Math.max(0.08, tabRect.width / targetRect.width);
         const sy = Math.max(0.04, tabRect.height / targetRect.height);
 
-        const isMobile = window.innerWidth <= 768;
+        const isMobile = window.innerWidth <= 768 || window.matchMedia('(pointer: coarse)').matches;
         const curPreset = ANIM_PRESETS[window.settingsState?.animPreset] || ANIM_PRESETS.cinematic;
         const duration = isMobile ? curPreset.closeMobileDur : curPreset.closeDur;
         const easing = curPreset.closeEase;
 
-        const hasMotionBlur = (window.settingsState?.perfLevel ?? 0) === 0;
+        const hasMotionBlur = !isMobile && (window.settingsState?.perfLevel ?? 0) === 0 && (window.settingsState?.motionBlurStrength ?? 0) > 0;
         const blurStrength = window.settingsState?.motionBlurStrength ?? 3.0;
 
-        // Pure 2-keyframe reverse retraction into the navigation tab
+        // Fluid Dynamic Island Droplet Retraction
+        // 3-phase physics: subtle vertical suction tension -> smooth acceleration -> absorption into capsule
         const shrinkKeyframes = [
             {
                 transform: 'translate3d(0, 0, 0) scale(1, 1)',
                 borderRadius: `${isMobile ? 22 : 26}px`,
                 opacity: 1,
+                boxShadow: '0 32px 80px -12px rgba(0, 0, 0, 0.75), 0 0 45px var(--purple-glow, rgba(192, 88, 255, 0.35))',
                 offset: 0
+            },
+            {
+                transform: `translate3d(${(dx * 0.12).toFixed(1)}px, ${(dy * 0.15).toFixed(1)}px, 0) scale(0.96, 0.97)`,
+                borderRadius: `${isMobile ? 24 : 26}px`,
+                opacity: 0.95,
+                boxShadow: '0 16px 40px -8px rgba(0, 0, 0, 0.6), 0 0 20px var(--purple-glow, rgba(192, 88, 255, 0.2))',
+                offset: 0.28
             },
             {
                 transform: `translate3d(${dx.toFixed(1)}px, ${dy.toFixed(1)}px, 0) scale(${sx.toFixed(4)}, ${sy.toFixed(4)})`,
                 borderRadius: '24px',
                 opacity: 0,
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 rgba(0, 0, 0, 0)',
                 offset: 1
             }
         ];
@@ -690,12 +737,32 @@ document.addEventListener('DOMContentLoaded', () => {
             ], { duration, easing: 'ease-out' });
         }
 
-        // Fade out inner content quickly
+        // Staggered smooth upward dissolution of inner content in sync with retraction
+        const header = container.querySelector('.schedule-modal-header, .calc-modal-header, .alarm-modal-header, .ai-modal-header');
+        const body = container.querySelector('.schedule-modal-body, .calc-body, .alarm-modal-body, .ai-modal-body, .calc-result-area, .ai-modal-frame-wrap');
+        const contentDur = Math.round(duration * 0.78);
+
+        if (header) {
+            header.animate([
+                { opacity: 1, transform: 'translate3d(0, 0, 0) scale(1)' },
+                { opacity: 0, transform: 'translate3d(0, -10px, 0) scale(0.96)' }
+            ], { duration: contentDur, easing: 'cubic-bezier(0.32, 0, 0.15, 1)', fill: 'forwards' });
+        }
+
+        if (body) {
+            body.animate([
+                { opacity: 1, transform: 'translate3d(0, 0, 0) scale(1)' },
+                { opacity: 0, transform: 'translate3d(0, -8px, 0) scale(0.95)' }
+            ], { duration: contentDur, easing: 'cubic-bezier(0.32, 0, 0.15, 1)', fill: 'forwards' });
+        }
+
         Array.from(container.children).forEach(child => {
-            child.animate([
-                { opacity: 1, transform: 'scale(1)' },
-                { opacity: 0, transform: 'scale(0.96)' }
-            ], { duration: Math.min(120, duration), easing: 'ease-out', fill: 'forwards' });
+            if (child !== header && child !== body) {
+                child.animate([
+                    { opacity: 1, transform: 'scale(1)' },
+                    { opacity: 0, transform: 'scale(0.95)' }
+                ], { duration: contentDur, easing: 'cubic-bezier(0.32, 0, 0.15, 1)', fill: 'forwards' });
+            }
         });
 
         let finished = false;
@@ -756,27 +823,87 @@ document.addEventListener('DOMContentLoaded', () => {
     function closeScheduleModal() {
         if (!scheduleModalBackdrop || !scheduleModalContainer) return;
         const tab = document.querySelector('.nav-tab[data-tab="schedule"]');
-        closeDynamicIslandModal(scheduleModalBackdrop, scheduleModalContainer, tab, () => {
-            const gdzTab = document.querySelector('.nav-tab[data-tab="gdz"]');
-            if (gdzTab) selectTab(gdzTab, false);
-        });
+        const gdzTab = document.querySelector('.nav-tab[data-tab="gdz"]');
+        if (gdzTab) selectTab(gdzTab, false);
+        closeDynamicIslandModal(scheduleModalBackdrop, scheduleModalContainer, tab);
     }
 
-    function switchScheduleView(view) {
+    function switchScheduleView(view, direction = null) {
+        const isCurrentBells = segBtnBells?.classList.contains('active');
+        const currentView = isCurrentBells ? 'bells' : 'lessons';
+
         if (view === 'bells') {
             if (segBtnBells) { segBtnBells.classList.add('active'); segBtnBells.setAttribute('aria-selected', 'true'); }
             if (segBtnLessons) { segBtnLessons.classList.remove('active'); segBtnLessons.setAttribute('aria-selected', 'false'); }
-            if (wrapBells) wrapBells.classList.add('active');
-            if (wrapLessons) wrapLessons.classList.remove('active');
         } else {
             if (segBtnLessons) { segBtnLessons.classList.add('active'); segBtnLessons.setAttribute('aria-selected', 'true'); }
             if (segBtnBells) { segBtnBells.classList.remove('active'); segBtnBells.setAttribute('aria-selected', 'false'); }
-            if (wrapLessons) wrapLessons.classList.add('active');
-            if (wrapBells) wrapBells.classList.remove('active');
         }
+
         if (window.settingsState) {
             window.settingsState.scheduleView = view;
             persistSettings();
+        }
+
+        if (currentView === view && direction === null) return;
+
+        const isGoingToLessons = view === 'lessons';
+        const effectiveDir = direction || (isGoingToLessons ? 'left' : 'right');
+        const outgoing = isGoingToLessons ? wrapBells : wrapLessons;
+        const incoming = isGoingToLessons ? wrapLessons : wrapBells;
+
+        if (outgoing && incoming && outgoing !== incoming && outgoing.classList.contains('active')) {
+            const outX = effectiveDir === 'left' ? -65 : 65;
+            const inX = effectiveDir === 'left' ? 65 : -65;
+
+            outgoing.getAnimations().forEach(a => a.cancel());
+            incoming.getAnimations().forEach(a => a.cancel());
+
+            outgoing.style.position = 'absolute';
+            outgoing.style.top = '16px';
+            outgoing.style.left = '16px';
+            outgoing.style.right = '16px';
+            outgoing.style.width = 'calc(100% - 32px)';
+            outgoing.style.pointerEvents = 'none';
+
+            incoming.style.position = 'relative';
+            incoming.style.display = 'flex';
+            incoming.classList.add('active');
+            incoming.style.pointerEvents = 'auto';
+
+            outgoing.animate([
+                { transform: 'translateX(0px)', opacity: 1 },
+                { transform: `translateX(${outX}px)`, opacity: 0 }
+            ], { duration: 300, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'forwards' }).onfinish = () => {
+                outgoing.classList.remove('active');
+                outgoing.style.display = 'none';
+                outgoing.style.position = '';
+                outgoing.style.top = '';
+                outgoing.style.left = '';
+                outgoing.style.right = '';
+                outgoing.style.width = '';
+                outgoing.style.pointerEvents = '';
+            };
+
+            incoming.animate([
+                { transform: `translateX(${inX}px)`, opacity: 0 },
+                { transform: 'translateX(0px)', opacity: 1 }
+            ], { duration: 300, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'forwards' }).onfinish = () => {
+                incoming.style.transform = 'none';
+            };
+        } else {
+            if (wrapBells) {
+                wrapBells.classList.toggle('active', view === 'bells');
+                wrapBells.style.display = view === 'bells' ? 'flex' : 'none';
+                wrapBells.style.transform = 'none';
+                wrapBells.style.opacity = '1';
+            }
+            if (wrapLessons) {
+                wrapLessons.classList.toggle('active', view === 'lessons');
+                wrapLessons.style.display = view === 'lessons' ? 'flex' : 'none';
+                wrapLessons.style.transform = 'none';
+                wrapLessons.style.opacity = '1';
+            }
         }
     }
 
@@ -784,8 +911,50 @@ document.addEventListener('DOMContentLoaded', () => {
     switchScheduleView(window.settingsState?.scheduleView || 'bells');
 
     if (segBtnBells && segBtnLessons) {
-        segBtnBells.addEventListener('click', () => switchScheduleView('bells'));
-        segBtnLessons.addEventListener('click', () => switchScheduleView('lessons'));
+        segBtnBells.addEventListener('click', () => switchScheduleView('bells', 'right'));
+        segBtnLessons.addEventListener('click', () => switchScheduleView('lessons', 'left'));
+    }
+
+    // Touch Swipe Gesture for switching schedule view (Swipe Left = Lessons, Swipe Right = Bells)
+    const scheduleViewerEl = document.getElementById('scheduleImageViewer');
+    if (scheduleViewerEl) {
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let isSwiping = false;
+
+        scheduleViewerEl.addEventListener('touchstart', (e) => {
+            if (e.touches.length !== 1) return;
+            const isZoomed = scheduleViewerEl.querySelector('.schedule-view-img.is-zoomed');
+            if (isZoomed) return;
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            isSwiping = true;
+        }, { passive: true });
+
+        scheduleViewerEl.addEventListener('touchend', (e) => {
+            if (!isSwiping || e.changedTouches.length === 0) return;
+            isSwiping = false;
+            const deltaX = e.changedTouches[0].clientX - touchStartX;
+            const deltaY = e.changedTouches[0].clientY - touchStartY;
+
+            if (Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY) * 1.3) {
+                if (deltaX < 0) {
+                    switchScheduleView('lessons', 'left');
+                    if (window.settingsState?.hapticMode !== false && 'vibrate' in navigator) {
+                        try { navigator.vibrate(12); } catch (_) {}
+                    }
+                } else {
+                    switchScheduleView('bells', 'right');
+                    if (window.settingsState?.hapticMode !== false && 'vibrate' in navigator) {
+                        try { navigator.vibrate(12); } catch (_) {}
+                    }
+                }
+            }
+        }, { passive: true });
+
+        scheduleViewerEl.addEventListener('touchcancel', () => {
+            isSwiping = false;
+        }, { passive: true });
     }
 
     if (scheduleModalCloseBtn) {
@@ -814,10 +983,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function closeAlarmModal() {
         if (!alarmModalBackdrop || !alarmModalContainer) return;
         const tab = document.querySelector('.nav-tab[data-tab="alarm"]');
-        closeDynamicIslandModal(alarmModalBackdrop, alarmModalContainer, tab, () => {
-            const gdzTab = document.querySelector('.nav-tab[data-tab="gdz"]');
-            if (gdzTab) selectTab(gdzTab, false);
-        });
+        const gdzTab = document.querySelector('.nav-tab[data-tab="gdz"]');
+        if (gdzTab) selectTab(gdzTab, false);
+        closeDynamicIslandModal(alarmModalBackdrop, alarmModalContainer, tab);
     }
 
     if (alarmModalCloseBtn) {
@@ -847,10 +1015,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function closeAiModal() {
         if (!aiModalBackdrop || !aiModalContainer) return;
         const tab = document.querySelector('.nav-tab[data-tab="ai"]');
-        closeDynamicIslandModal(aiModalBackdrop, aiModalContainer, tab, () => {
-            const gdzTab = document.querySelector('.nav-tab[data-tab="gdz"]');
-            if (gdzTab) selectTab(gdzTab, false);
-        });
+        const gdzTab = document.querySelector('.nav-tab[data-tab="gdz"]');
+        if (gdzTab) selectTab(gdzTab, false);
+        closeDynamicIslandModal(aiModalBackdrop, aiModalContainer, tab);
     }
 
     if (aiModalCloseBtn) {
@@ -890,16 +1057,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!calcModalBackdrop || !calcModalContainer) return;
         const tab = document.querySelector('.nav-tab[data-tab="calc"]');
         openDynamicIslandModal(calcModalBackdrop, calcModalContainer, tab);
-        if (calcNum1) setTimeout(() => calcNum1.focus(), 250);
+        if (calcNum1 && window.innerWidth > 768) setTimeout(() => calcNum1.focus(), 250);
     }
 
     function closeCalcModal() {
         if (!calcModalBackdrop || !calcModalContainer) return;
         const tab = document.querySelector('.nav-tab[data-tab="calc"]');
-        closeDynamicIslandModal(calcModalBackdrop, calcModalContainer, tab, () => {
-            const gdzTab = document.querySelector('.nav-tab[data-tab="gdz"]');
-            if (gdzTab) selectTab(gdzTab, false);
-        });
+        const gdzTab = document.querySelector('.nav-tab[data-tab="gdz"]');
+        if (gdzTab) selectTab(gdzTab, false);
+        closeDynamicIslandModal(calcModalBackdrop, calcModalContainer, tab);
     }
 
     calcOpBtns.forEach(btn => {
@@ -907,6 +1073,9 @@ document.addEventListener('DOMContentLoaded', () => {
             calcOpBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             calcOp = btn.getAttribute('data-op');
+            if (window.settingsState?.hapticMode !== false && 'vibrate' in navigator) {
+                try { navigator.vibrate(8); } catch (_) {}
+            }
         });
     });
 
@@ -938,6 +1107,7 @@ document.addEventListener('DOMContentLoaded', () => {
         inp.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
+                inp.blur();
                 if (calcSolveBtn) calcSolveBtn.click();
             }
         });
@@ -1114,6 +1284,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (calcSolveBtn) {
         calcSolveBtn.addEventListener('click', () => {
+            if (window.settingsState?.hapticMode !== false && 'vibrate' in navigator) {
+                try { navigator.vibrate(10); } catch (_) {}
+            }
             const a = parseCalcNum(calcNum1?.value);
             const b = parseCalcNum(calcNum2?.value);
             if (isNaN(a) || isNaN(b)) {
@@ -1265,6 +1438,10 @@ document.addEventListener('DOMContentLoaded', () => {
         springH.setTarget(tab.offsetHeight);
         startNavAnim();
 
+        if (window.innerWidth <= 768 && typeof tab.scrollIntoView === 'function') {
+            tab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+
         if (triggerAction) {
             const tabType = tab.getAttribute('data-tab');
             if (tabType === 'schedule') {
@@ -1291,13 +1468,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     openAlarmModal();
                 }
-            } else if (tabType === 'forum') {
-                closeAllModals();
-                showToast('Розділ «Форум» незабаром буде доступний 💬', '🚀');
-                setTimeout(() => {
-                    const gdzTab = document.querySelector('.nav-tab[data-tab="gdz"]');
-                    if (gdzTab) selectTab(gdzTab, false);
-                }, 1300);
             } else if (tabType === 'gdz') {
                 closeAllModals();
                 if ((window.scrollY || window.pageYOffset || 0) > 20) {
@@ -1393,10 +1563,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Tactile touch & scale-down with haptic impulse
-        card.addEventListener('pointerdown', () => {
+        let cardTouchStartX = 0;
+        let cardTouchStartY = 0;
+        card.addEventListener('pointerdown', (e) => {
+            cardTouchStartX = e.clientX;
+            cardTouchStartY = e.clientY;
+            card._isCardScrolling = false;
             card.classList.add('is-pressed');
             if (window.settingsState?.hapticMode !== false && 'vibrate' in navigator) {
                 try { navigator.vibrate(8); } catch (_) {}
+            }
+        });
+        card.addEventListener('pointermove', (e) => {
+            const dist = Math.hypot(e.clientX - cardTouchStartX, e.clientY - cardTouchStartY);
+            if (dist > 8) {
+                card._isCardScrolling = true;
+                card.classList.remove('is-pressed');
             }
         });
         const releaseCardPress = () => card.classList.remove('is-pressed');
@@ -1405,6 +1587,12 @@ document.addEventListener('DOMContentLoaded', () => {
         card.addEventListener('pointerleave', releaseCardPress);
 
         card.addEventListener('click', (e) => {
+            if (card._isCardScrolling) {
+                card._isCardScrolling = false;
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                return;
+            }
             if (card.classList.contains('is-no-book')) return;
             if (card.classList.contains('is-dual-card')) return;
 
@@ -1606,9 +1794,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 { name: "ГДЗОНЛАЙН", url: "https://gdzonline.net/8_klas/informatika_8_klas/" }
             ]
         },
+        "Фізкультура": {
+            title: "Фізкультура",
+            shortTitle: "ФІЗКУЛЬТУРА",
+            book: "#",
+            image: null,
+            gdz: []
+        },
         "Фізична культура": {
-            title: "Фізична культура",
-            shortTitle: "ФІЗИЧНА КУЛЬТУРА",
+            title: "Фізкультура",
+            shortTitle: "ФІЗКУЛЬТУРА",
             book: "#",
             image: null,
             gdz: []
@@ -1754,15 +1949,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function rectFrame(rect, radius, opacity = 1) {
-        return {
+    function rectFrame(rect, radius, opacity) {
+        const frame = {
             left: `${rect.left}px`,
             top: `${rect.top}px`,
             width: `${rect.width}px`,
             height: `${rect.height}px`,
-            borderRadius: `${radius}px`,
-            opacity
+            borderRadius: `${radius}px`
         };
+        if (typeof opacity === 'number') frame.opacity = opacity;
+        return frame;
     }
 
     function interpolateRect(r1, r2, progress) {
@@ -1780,11 +1976,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const vpH = window.innerHeight;
         const isMobile = vpW <= 768;
 
-        const padX = isMobile ? 32 : (vpW <= 1024 ? 36 : 64);
-        const padY = isMobile ? 48 : 64;
+        const padX = isMobile ? 24 : (vpW <= 1024 ? 36 : 64);
+        const padY = isMobile ? 32 : 64;
 
-        const targetW = isMobile ? Math.min(328, vpW - padX) : Math.min(876, vpW - padX);
-        const targetH = isMobile ? Math.min(410, vpH - padY) : Math.min(447, vpH - padY);
+        const targetW = isMobile ? Math.min(360, vpW - padX) : Math.min(876, vpW - padX);
+        const targetH = isMobile ? Math.min(480, vpH - padY) : Math.min(447, vpH - padY);
 
         const left = Math.round((vpW - targetW) / 2);
         const top = Math.round((vpH - targetH) / 2);
@@ -1809,22 +2005,186 @@ document.addEventListener('DOMContentLoaded', () => {
             height: `${rect.height}px`,
             minHeight: '0px',
             transform: 'none',
-            borderRadius: `${radius}px`
+            borderRadius: `${radius}px`,
+            zIndex: '10'
         });
     }
-
-    function continueClosingInParallel() {
-        document.querySelectorAll('.modal-closing-clone').forEach(element => element.remove());
-        if (originCard) {
-            originCard.classList.remove('is-opening', 'is-returning');
-            originCard.style.opacity = '1';
-            originCard.style.visibility = 'visible';
-            originCard.style.pointerEvents = '';
-            originCard.style.removeProperty('--mouse-x');
-            originCard.style.removeProperty('--mouse-y');
-            originCard = null;
-            originRect = null;
+    function spawnClosingClone(closingCard, currentRect, computedRadius) {
+        if (!closingCard || !modalBackdrop || !modalContainer || !currentRect || currentRect.width < 10 || currentRect.height < 10) {
+            if (closingCard) {
+                closingCard.classList.remove('is-opening', 'is-returning');
+                closingCard.style.opacity = '1';
+                closingCard.style.visibility = 'visible';
+            }
+            return null;
         }
+
+        // Clean up older clones if any so screen stays clean
+        const activeClones = document.querySelectorAll('.modal-closing-clone');
+        if (activeClones.length >= 2) {
+            activeClones[0]._restoreCard?.();
+            activeClones[0].remove();
+        }
+
+        let targetRect = closingCard.getBoundingClientRect();
+        if (!targetRect || targetRect.width < 10) {
+            targetRect = getCardUnscaledRect(closingCard);
+        }
+        if (!targetRect && originRect && originRect.width > 0 && originRect.height > 0) {
+            const dX = (window.scrollX || window.pageXOffset || 0) - (originScrollX || 0);
+            const dY = (window.scrollY || window.pageYOffset || 0) - (originScrollY || 0);
+            targetRect = {
+                left: originRect.left - dX,
+                top: originRect.top - dY,
+                width: originRect.width,
+                height: originRect.height,
+                right: originRect.right - dX,
+                bottom: originRect.bottom - dY
+            };
+        }
+        if (!targetRect) {
+            targetRect = currentRect;
+        }
+
+        // Ensure launch view has closingCard details before cloning
+        syncModalLaunchDetails(closingCard);
+
+        const clone = modalContainer.cloneNode(true);
+        clone.classList.add('modal-closing-clone');
+        clone.removeAttribute('id');
+        clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+
+        Object.assign(clone.style, {
+            position: 'fixed',
+            left: `${currentRect.left}px`,
+            top: `${currentRect.top}px`,
+            width: `${currentRect.width}px`,
+            height: `${currentRect.height}px`,
+            borderRadius: `${computedRadius}px`,
+            margin: '0',
+            zIndex: '2',
+            pointerEvents: 'none',
+            transform: 'none',
+            transformOrigin: 'center center'
+        });
+
+        const cloneLaunchView = clone.querySelector('.modal-launch-view');
+        const cloneContent = clone.querySelector('.modal-content-wrapper');
+        const cloneCloseBtn = clone.querySelector('.modal-close-btn');
+        const cloneHomeBar = clone.querySelector('.modal-home-bar-zone');
+
+        if (cloneLaunchView) {
+            cloneLaunchView.style.display = 'flex';
+            cloneLaunchView.style.opacity = '1';
+            cloneLaunchView.style.zIndex = '5';
+        }
+        if (cloneContent) {
+            cloneContent.style.zIndex = '1';
+        }
+
+        modalBackdrop.insertBefore(clone, modalContainer);
+
+        const isMobileDevice = window.innerWidth <= 768 || window.matchMedia('(pointer: coarse)').matches;
+        const preset = ANIM_PRESETS[window.settingsState?.animPreset] || ANIM_PRESETS.cinematic;
+        const baseCloseDur = window.settingsState?.perfLevel === 2 ? 110 : (isMobileDevice ? preset.closeMobileDur : preset.closeDur);
+        const restRect = modalRestRect || getModalRestRect();
+        const totalDist = Math.hypot(restRect.left - targetRect.left, restRect.top - targetRect.top) || 1;
+        const curDist = Math.hypot(currentRect.left - targetRect.left, currentRect.top - targetRect.top);
+        const distRatio = Math.min(1, Math.max(0.72, curDist / totalDist));
+        const cloneDuration = Math.round(baseCloseDur * distRatio);
+        const cloneEasing = preset.closeEase;
+
+        const cloneAnim = clone.animate([
+            { ...rectFrame(currentRect, computedRadius, 1), offset: 0 },
+            { ...rectFrame(targetRect, isMobileDevice ? 20 : 22, 1), offset: 1 }
+        ], { duration: cloneDuration, easing: cloneEasing, fill: 'forwards' });
+
+        // Smoothly dissolve clone into the background card so it never sits as a sharp box on top of the blur
+        clone.animate([
+            { opacity: 1, offset: 0 },
+            { opacity: 1, offset: 0.45 },
+            { opacity: 0, offset: 1 }
+        ], { duration: cloneDuration, easing: 'ease-out', fill: 'forwards' });
+
+        // Soft Cinema Motion Blur Track on closing clone
+        const hasMotionBlur = !isMobileDevice && (window.settingsState?.perfLevel ?? 0) === 0 && (window.settingsState?.motionBlurStrength ?? 0) > 0;
+        const blurStrength = window.settingsState?.motionBlurStrength ?? 3.0;
+        const peakBlur = blurStrength * 2.0;
+
+        if (hasMotionBlur && peakBlur > 0.5) {
+            clone.animate([
+                { filter: 'blur(0px)' },
+                { filter: `blur(${peakBlur.toFixed(1)}px)`, offset: 0.35 },
+                { filter: 'blur(0px)', offset: 1 }
+            ], { duration: cloneDuration, easing: 'ease-out' });
+        }
+
+        // Smooth crossfades for content inside clone
+        const xfadeDur = Math.min(180, Math.round(cloneDuration * 0.6));
+
+        if (cloneContent) {
+            cloneContent.animate([
+                { opacity: parseFloat(getComputedStyle(cloneContent).opacity) || 1 },
+                { opacity: 0 }
+            ], { duration: xfadeDur, easing: 'ease-out', fill: 'forwards' });
+        }
+        if (cloneLaunchView) {
+            cloneLaunchView.animate([
+                { opacity: parseFloat(getComputedStyle(cloneLaunchView).opacity) || 0 },
+                { opacity: 1 }
+            ], { duration: xfadeDur, easing: cloneEasing, fill: 'forwards' });
+        }
+        if (cloneCloseBtn) {
+            cloneCloseBtn.animate([
+                { opacity: 1, transform: 'scale(1)' },
+                { opacity: 0, transform: 'scale(0.8)' }
+            ], { duration: Math.min(100, cloneDuration), easing: 'ease-out', fill: 'forwards' });
+        }
+        if (cloneHomeBar) {
+            cloneHomeBar.animate([
+                { opacity: 1, transform: 'scale(1)' },
+                { opacity: 0, transform: 'scale(0.8)' }
+            ], { duration: Math.min(100, cloneDuration), easing: 'ease-out', fill: 'forwards' });
+        }
+
+        // Keep closingCard hidden during early flight, then smoothly crossfade in as clone dissolves
+        closingCard.classList.remove('is-returning');
+        closingCard.classList.add('is-opening');
+        closingCard.style.opacity = '0';
+        closingCard.animate([
+            { opacity: 0, offset: 0 },
+            { opacity: 0, offset: 0.40 },
+            { opacity: 1, offset: 1 }
+        ], { duration: cloneDuration, easing: 'ease-out', fill: 'forwards' });
+
+        let restored = false;
+        const restoreCard = () => {
+            if (restored) return;
+            restored = true;
+            if (closingCard && closingCard !== originCard) {
+                closingCard.classList.remove('is-opening', 'is-returning');
+                closingCard.style.opacity = '1';
+                closingCard.style.visibility = 'visible';
+                closingCard.style.pointerEvents = '';
+                closingCard.style.removeProperty('--mouse-x');
+                closingCard.style.removeProperty('--mouse-y');
+            }
+            try { clone.remove(); } catch (_) {}
+            // If modal was closed completely and this was the last clone, ensure backdrop is hidden
+            if (modalState === 'closed' && document.querySelectorAll('.modal-closing-clone').length <= 1) {
+                modalBackdrop.classList.remove('is-open', 'is-closing');
+                appContainer.classList.remove('modal-open', 'modal-closing');
+                modalBackdrop.setAttribute('aria-hidden', 'true');
+                window.lenis?.start();
+            }
+        };
+
+        clone._targetCard = closingCard;
+        clone._restoreCard = restoreCard;
+        cloneAnim.onfinish = restoreCard;
+        setTimeout(restoreCard, cloneDuration + 60);
+
+        return clone;
     }
 
     function clearModalAnimation() {
@@ -1955,18 +2315,40 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // Clean up any existing closing clone for this card, but if one matches this card, capture its mid-air position!
+        let startFromCloneRect = null;
+        let startFromCloneRadius = null;
+        document.querySelectorAll('.modal-closing-clone').forEach(existingClone => {
+            if (existingClone._targetCard === card) {
+                const r = existingClone.getBoundingClientRect();
+                if (r.width > 30 && r.height > 30) {
+                    startFromCloneRect = {
+                        left: r.left,
+                        top: r.top,
+                        width: r.width,
+                        height: r.height,
+                        right: r.right,
+                        bottom: r.bottom
+                    };
+                    startFromCloneRadius = parseFloat(getComputedStyle(existingClone).borderRadius) || 22;
+                }
+                if (existingClone._restoreCard) existingClone._restoreCard();
+                existingClone.remove();
+            } else if (existingClone._targetCard !== originCard) {
+                if (existingClone._restoreCard) existingClone._restoreCard();
+                existingClone.remove();
+            }
+        });
+
         // If another card is already open, opening, or closing, cleanly hand off to the new card
         if (modalState !== 'closed') {
             transitionId++;
-            clearModalAnimation();
-            document.querySelectorAll('.modal-closing-clone').forEach(el => el.remove());
             if (originCard && originCard !== card) {
-                originCard.classList.remove('is-opening', 'is-returning');
-                originCard.style.opacity = '1';
-                originCard.style.visibility = 'visible';
-                originCard.style.removeProperty('--mouse-x');
-                originCard.style.removeProperty('--mouse-y');
+                const currentModalRect = modalContainer.getBoundingClientRect();
+                const computedModalRadius = parseFloat(getComputedStyle(modalContainer).borderRadius) || 24;
+                spawnClosingClone(originCard, currentModalRect, computedModalRadius);
             }
+            clearModalAnimation();
             modalBackdrop.classList.remove('is-closing');
             appContainer.classList.remove('modal-closing');
             originCard = null;
@@ -2009,12 +2391,23 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Set textbook links
+            const hasValidBook = !!(subjectData.book && subjectData.book !== '#' && subjectData.book.startsWith('http'));
             if (modalBookLinkBtn) {
-                modalBookLinkBtn.href = subjectData.book || '#';
-                modalBookLinkBtn.style.display = (subjectData.book && subjectData.book !== '#') ? 'flex' : 'none';
+                modalBookLinkBtn.href = hasValidBook ? subjectData.book : '#';
+                modalBookLinkBtn.style.display = hasValidBook ? 'flex' : 'none';
             }
             if (modalBookPreviewLink) {
-                modalBookPreviewLink.href = subjectData.book || '#';
+                if (hasValidBook) {
+                    modalBookPreviewLink.href = subjectData.book;
+                    modalBookPreviewLink.style.pointerEvents = '';
+                    modalBookPreviewLink.removeAttribute('aria-disabled');
+                    modalBookPreviewLink.title = 'Натисніть, щоб відкрити підручник';
+                } else {
+                    modalBookPreviewLink.removeAttribute('href');
+                    modalBookPreviewLink.style.pointerEvents = 'none';
+                    modalBookPreviewLink.setAttribute('aria-disabled', 'true');
+                    modalBookPreviewLink.title = 'Підручник відсутній для цього предмета';
+                }
             }
 
             // Set book cover image in preview card
@@ -2046,7 +2439,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         card.classList.remove('is-pressed');
         originCard = card;
-        originRect = getCardUnscaledRect(card) || card.getBoundingClientRect();
+        originRect = (startFromCloneRect && startFromCloneRect.width > 30) ? startFromCloneRect : (getCardUnscaledRect(card) || card.getBoundingClientRect());
         syncModalLaunchDetails(card, overrideDbTitle);
         card.classList.add('is-opening');
         card.style.opacity = '0';
@@ -2056,12 +2449,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const thisTransition = ++transitionId;
 
         const isMobile = window.innerWidth <= 768 || window.matchMedia('(pointer: coarse)').matches;
+        const initialRadius = startFromCloneRadius || (isMobile ? 20 : 22);
 
         modalBackdrop.classList.add('is-open');
         appContainer.classList.add('modal-open');
         modalBackdrop.setAttribute('aria-hidden', 'false');
         window.lenis?.stop();
         clearModalAnimation();
+        modalContainer.style.visibility = 'visible';
+        modalContainer.style.opacity = '1';
 
         modalRestRect = getModalRestRect();
 
@@ -2087,14 +2483,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const launchDuration = window.settingsState?.perfLevel === 2 ? 140 : (isMobile ? curPreset.openMobileDur : curPreset.openDur);
         launchEasing = curPreset.openEase;
         closeEasing = curPreset.closeEase;
-        const hasMotionBlur = (window.settingsState?.perfLevel ?? 0) === 0;
+        const hasMotionBlur = !isMobile && (window.settingsState?.perfLevel ?? 0) === 0;
         const blurStrength = window.settingsState?.motionBlurStrength ?? 3.0;
         const peakBlur = blurStrength * 2.2;
         const midBlur = blurStrength * 0.7;
 
-        pinModalToRect(originRect, isMobile ? 20 : 22);
+        pinModalToRect(originRect, initialRadius);
         const launchKeyframes = [
-            { ...rectFrame(originRect, isMobile ? 20 : 22, 1), offset: 0 },
+            { ...rectFrame(originRect, initialRadius, 1), offset: 0 },
             { ...rectFrame(modalRestRect, modalRestRect.radius || (isMobile ? 24 : 28)), offset: 1 }
         ];
 
@@ -2112,23 +2508,27 @@ document.addEventListener('DOMContentLoaded', () => {
         const launchViewLaunch = modalLaunchView?.animate([
             { opacity: 1 },
             { opacity: 0 }
-        ], { duration: 180, delay: 40, easing: 'ease-out', fill: 'forwards' });
+        ], { duration: Math.min(180, Math.round(launchDuration * 0.5)), delay: Math.round(launchDuration * 0.1), easing: 'ease-out', fill: 'forwards' });
 
+        const contentDelay = Math.round(launchDuration * 0.18);
+        const contentDuration = Math.round(launchDuration * 0.82);
         const contentLaunch = modalContent?.animate([
             { opacity: 0, transform: 'scale(0.95) translateY(6px)' },
             { opacity: 0, transform: 'scale(0.96) translateY(4px)', offset: 0.28 },
             { opacity: 1, transform: 'scale(1) translateY(0)', offset: 1 }
-        ], { duration: 340, delay: 100, easing: launchEasing, fill: 'forwards' });
+        ], { duration: contentDuration, delay: contentDelay, easing: launchEasing, fill: 'forwards' });
 
+        const chromeDelay = Math.round(launchDuration * 0.22);
+        const chromeDuration = Math.round(launchDuration * 0.78);
         const chromeLaunch = modalCloseBtn?.animate([
             { opacity: 0, transform: 'scale(0.75)' },
             { opacity: 1, transform: 'scale(1)' }
-        ], { duration: 240, delay: 150, easing: launchEasing, fill: 'forwards' });
+        ], { duration: chromeDuration, delay: chromeDelay, easing: launchEasing, fill: 'forwards' });
 
         const homeBarLaunch = modalHomeBarZone?.animate([
             { opacity: 0, transform: 'translateY(10px)' },
             { opacity: 1, transform: 'translateY(0)' }
-        ], { duration: 240, delay: 160, easing: launchEasing, fill: 'forwards' });
+        ], { duration: chromeDuration, delay: chromeDelay, easing: launchEasing, fill: 'forwards' });
 
         modalAnimation = launch;
         contentAnimation = contentLaunch || null;
@@ -2183,6 +2583,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const curPreset = ANIM_PRESETS[window.settingsState?.animPreset] || ANIM_PRESETS.cinematic;
         const closeDuration = window.settingsState?.perfLevel === 2 ? 110 : (isMobile ? curPreset.closeMobileDur : curPreset.closeDur);
         closeEasing = curPreset.closeEase;
+        modalBackdrop.style.setProperty('--close-duration', `${closeDuration}ms`);
 
         // Keep originCard cleanly hidden during the flight.
         // It must NOT show up early underneath, eliminating the double-card glitch!
@@ -2199,18 +2600,37 @@ document.addEventListener('DOMContentLoaded', () => {
             modalContainer.style.transform = 'none';
             modalContainer.style.transformOrigin = '';
             modalContainer.style.filter = '';
+            modalContainer.style.opacity = '';
             clearModalAnimation();
-            modalBackdrop.classList.remove('is-closing');
-            modalBackdrop.classList.remove('is-open');
-            appContainer.classList.remove('modal-closing');
-            appContainer.classList.remove('modal-open');
-            modalBackdrop.style.opacity = '';
-            appContainer.style.transform = '';
+
+            const hasActiveClones = document.querySelectorAll('.modal-closing-clone').length > 0;
+            if (!hasActiveClones) {
+                modalBackdrop.classList.remove('is-closing');
+                modalBackdrop.classList.remove('is-open');
+                appContainer.classList.remove('modal-closing');
+                appContainer.classList.remove('modal-open');
+                modalBackdrop.style.opacity = '';
+                modalBackdrop.style.removeProperty('--close-duration');
+                appContainer.style.transform = '';
+                modalBackdrop.setAttribute('aria-hidden', 'true');
+                window.lenis?.start();
+            } else {
+                modalBackdrop.classList.remove('is-closing');
+                appContainer.classList.remove('modal-closing');
+            }
 
             // Ensure exact scroll position remains untouched (fallback if browser shifted)
             if (typeof originScrollY === 'number' && Math.abs((window.scrollY || window.pageYOffset || 0) - originScrollY) > 2) {
                 window.scrollTo(originScrollX || 0, originScrollY);
             }
+
+            // Reset any scroll velocity so motion blur never spuriously triggers after close
+            nativeVelocity = 0;
+            lastNativeScrollY = window.scrollY || 0;
+            lastNativeScrollTime = performance.now();
+            currentScrollBlur = 0;
+            if (mainContent) mainContent.style.filter = '';
+            if (window.lenis) window.lenis.velocity = 0;
 
             if (originCard) {
                 const landingCard = originCard;
@@ -2223,12 +2643,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             originCard = null;
             originRect = null;
-            modalBackdrop.setAttribute('aria-hidden', 'true');
-            window.lenis?.start();
             modalState = 'closed';
-            requestAnimationFrame(() => {
-                modalContainer.style.visibility = '';
-            });
         };
 
         const currentRect = modalContainer.getBoundingClientRect();
@@ -2254,7 +2669,7 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         }
         if (!targetRect) {
-            targetRect = currentRect;
+            targetRect = modalRestRect || getModalRestRect();
         }
 
         // Reset any inline transform from drag gesture before WAAPI frame animation begins
@@ -2267,17 +2682,33 @@ document.addEventListener('DOMContentLoaded', () => {
         modalLaunchView?.getAnimations().forEach(a => a.cancel());
         modalHomeBarZone?.getAnimations().forEach(a => a.cancel());
 
-        const hasMotionBlur = (window.settingsState?.perfLevel ?? 0) === 0;
+        const hasMotionBlur = !isMobile && (window.settingsState?.perfLevel ?? 0) === 0;
         const blurStrength = window.settingsState?.motionBlurStrength ?? 3.0;
         const peakBlur = blurStrength * 2.0;
 
         // Pure single-curve ease-out flight from currentRect to targetRect (no intermediate stalls or squash)
         const closeKeyframes = [
-            { ...rectFrame(currentRect, computedBorderRadius, 1), offset: 0 },
-            { ...rectFrame(targetRect, isMobile ? 20 : 22, 1), offset: 1 }
+            { ...rectFrame(currentRect, computedBorderRadius), offset: 0 },
+            { ...rectFrame(targetRect, isMobile ? 20 : 22), offset: 1 }
         ];
 
         const close = modalContainer.animate(closeKeyframes, { duration: closeDuration, easing: closeEasing, fill: 'forwards' });
+
+        // Seamless dissolve: fade modal container into originCard over the final 30% of flight
+        modalContainer.animate([
+            { opacity: 1, offset: 0 },
+            { opacity: 1, offset: 0.70 },
+            { opacity: 0, offset: 1 }
+        ], { duration: closeDuration, easing: 'ease-in', fill: 'forwards' });
+
+        // Concurrently fade originCard smoothly in underneath to prevent any sudden brightness snap or pop on landing
+        if (originCard) {
+            cardReturnAnimation = originCard.animate([
+                { opacity: 0, offset: 0 },
+                { opacity: 0, offset: 0.60 },
+                { opacity: 1, offset: 1 }
+            ], { duration: closeDuration, easing: 'ease-out', fill: 'forwards' });
+        }
 
         // Run soft motion blur independently on its own animation track so geometry curve stays completely smooth
         if (hasMotionBlur) {
@@ -2336,7 +2767,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleDragStart(e, fromHomeBar) {
         if (!['open', 'opening'].includes(modalState)) return;
-        if (e.target.closest('a, button:not(#modalHomeBarZone)') && !fromHomeBar) return;
+        if (!fromHomeBar && e.target.closest('a, button, input, select, .modal-options-column, .book-preview-card, .calc-body, .settings-modal-body, .schedule-image-viewer')) return;
 
         // If the user clicks or taps the Home Bar while the window is still opening:
         // Immediately smoothly dismiss back to the origin card instead of freezing into a broken state!
@@ -2362,8 +2793,8 @@ document.addEventListener('DOMContentLoaded', () => {
         modalBackdrop.style.transition = 'none';
         appContainer.style.transition = 'none';
 
-        if (e.pointerId !== undefined && modalContainer.setPointerCapture) {
-            try { modalContainer.setPointerCapture(e.pointerId); } catch (_) {}
+        if (fromHomeBar && e.pointerId !== undefined && modalHomeBarZone && modalHomeBarZone.setPointerCapture) {
+            try { modalHomeBarZone.setPointerCapture(e.pointerId); } catch (_) {}
         }
     }
 
@@ -2451,8 +2882,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Attach interactive gesture listeners
+    if (modalHomeBarZone) {
+        modalHomeBarZone.addEventListener('pointerdown', (e) => {
+            e.stopPropagation();
+            handleDragStart(e, true);
+        });
+    }
+
     if (modalContainer) {
         modalContainer.addEventListener('pointerdown', (e) => {
+            if (e.target.closest('#modalHomeBarZone')) return;
+            if (e.target.closest('.modal-content-wrapper, .modal-options-column, .book-preview-card, a, button, input, select')) return;
             handleDragStart(e, false);
         });
     }
@@ -2470,13 +2910,105 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (modalBackdrop) {
         modalBackdrop.addEventListener('click', (e) => {
-            if (e.target === modalBackdrop) {
+            // Close button inside modalContainer
+            if (e.target.closest && e.target.closest('#modalCloseBtn')) {
+                e.stopPropagation();
                 closeModal();
+                return;
             }
-        });
+
+            // Click is outside modalContainer (backdrop, background cards, etc.)
+            if (modalContainer && !modalContainer.contains(e.target)) {
+                // If fastSwitch is turned off OR modal is already open:
+                // Any click outside simply closes the modal!
+                if (!window.settingsState?.fastSwitch || modalState === 'open') {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    closeModal();
+                    return;
+                }
+
+                // If fastSwitch is enabled and user clicked during opening transition:
+                if (['opening', 'closing'].includes(modalState)) {
+                    if (typeof e.clientX === 'number' && typeof e.clientY === 'number') {
+                        const elements = document.elementsFromPoint(e.clientX, e.clientY);
+                        let clickedCard = null;
+                        let clickedPill = null;
+
+                        for (const el of elements) {
+                            if (el === modalBackdrop || el === modalContainer || modalContainer.contains(el)) continue;
+                            if (el.classList?.contains('modal-closing-clone') || el.closest('.modal-closing-clone')) continue;
+
+                            const pill = el.closest('.card-split-pill.has-book');
+                            if (pill) {
+                                clickedPill = pill;
+                                break;
+                            }
+
+                            const cardEl = el.closest('.liquid-card');
+                            if (cardEl) {
+                                clickedCard = cardEl;
+                                break;
+                            }
+                        }
+
+                        if (clickedPill) {
+                            const parentCard = clickedPill.closest('.liquid-card');
+                            const dbTitle = clickedPill.getAttribute('data-dbtitle');
+                            if (parentCard && dbTitle) {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                playTapticAudio('open');
+                                openModal(parentCard, dbTitle);
+                                return;
+                            }
+                        }
+
+                        if (clickedCard) {
+                            // If user tapped the same card that is currently launching, let it finish opening
+                            if (clickedCard === originCard) {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                return;
+                            }
+
+                            if (!clickedCard.classList.contains('is-no-book')) {
+                                e.stopPropagation();
+                                e.preventDefault();
+
+                                if (clickedCard.classList.contains('is-dual-card')) {
+                                    closeModal();
+                                    clickedCard.click();
+                                    return;
+                                }
+
+                                const r = clickedCard.getBoundingClientRect();
+                                const ripple = document.createElement('span');
+                                ripple.classList.add('ripple');
+                                const sz = Math.max(r.width, r.height) * 1.3;
+                                ripple.style.width = ripple.style.height = `${sz}px`;
+                                ripple.style.left = `${e.clientX - r.left - sz / 2}px`;
+                                ripple.style.top = `${e.clientY - r.top - sz / 2}px`;
+                                clickedCard.appendChild(ripple);
+                                setTimeout(() => ripple.remove(), 550);
+
+                                playTapticAudio('open');
+                                openModal(clickedCard);
+                                return;
+                            }
+                        }
+                    }
+
+                    // If user clicked the dark backdrop outside any card
+                    e.stopPropagation();
+                    closeModal();
+                    return;
+                }
+            }
+        }, true);
         modalBackdrop.addEventListener('touchmove', (e) => {
             const isMobile = window.innerWidth <= 768 || window.matchMedia('(pointer: coarse)').matches;
-            if (isMobile && ['open', 'opening', 'closing'].includes(modalState)) {
+            if (isMobile && ['open', 'opening', 'closing'].includes(modalState) && e.target === modalBackdrop) {
                 e.preventDefault();
             }
         }, { passive: false });
@@ -2507,6 +3039,13 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (alarmModalBackdrop && alarmModalBackdrop.classList.contains('is-open')) {
                 closeAlarmModal();
             }
+        }
+    });
+
+    window.addEventListener('resize', () => {
+        if (modalState === 'open' && modalContainer && typeof getModalRestRect === 'function' && typeof pinModalToRect === 'function') {
+            modalRestRect = getModalRestRect();
+            pinModalToRect(modalRestRect, modalRestRect.radius);
         }
     });
 
@@ -2645,7 +3184,7 @@ document.addEventListener('DOMContentLoaded', () => {
             lessons: [
                 { num: 1, name: "Хімія", time: "08:00 - 08:45", dbTitle: "ГДЗ Хімія", image: "assets/books/chemistry.jpg" },
                 { num: 2, name: "Українська мова", time: "08:55 - 09:40", dbTitle: "ГДЗ Українська мова", image: "assets/books/ukr_mova.jpg" },
-                { num: 3, name: "Фізичне виховання", time: "09:55 - 10:40", dbTitle: "Фізична культура", icon: "sport" },
+                { num: 3, name: "Фізкультура", time: "09:55 - 10:40", dbTitle: "Фізкультура", icon: "sport" },
                 { num: 4, name: "Історія України", time: "10:50 - 11:35", dbTitle: "ГДЗ Історія України", image: "assets/books/ukr_history.jpg" },
                 { num: 5, name: "Англійська мова", time: "11:40 - 12:25", dbTitle: "ГДЗ Англійська мова", image: "assets/books/english.jpg" },
                 { num: 6, name: "Алгебра", time: "12:30 - 13:15", dbTitle: "ГДЗ Алгебра", image: "assets/books/algebra.jpg" },
@@ -2662,14 +3201,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 { num: 4, name: "Фізика", time: "10:50 - 11:35", dbTitle: "ГДЗ Фізика", image: "assets/books/physics.jpg" },
                 { num: 5, name: "Алгебра", time: "11:40 - 12:25", dbTitle: "ГДЗ Алгебра", image: "assets/books/algebra.jpg" },
                 { num: 6, name: "Біологія", time: "12:30 - 13:15", dbTitle: "ГДЗ Біологія", image: "assets/books/biology.jpg" },
-                { num: 7, name: "Фізичне виховання", time: "13:20 - 14:05", dbTitle: "Фізична культура", icon: "sport" }
+                { num: 7, name: "Фізкультура", time: "13:20 - 14:05", dbTitle: "Фізкультура", icon: "sport" }
             ]
         },
         // Середа (7 уроків, 08:00 - 14:05)
         3: {
             name: "СЕРЕДА",
             lessons: [
-                { num: 1, name: "Фізичне виховання", time: "08:00 - 08:45", dbTitle: "Фізична культура", icon: "sport" },
+                { num: 1, name: "Фізкультура", time: "08:00 - 08:45", dbTitle: "Фізкультура", icon: "sport" },
                 { num: 2, name: "Інформатика", time: "08:55 - 09:40", dbTitle: "ГДЗ Інформатика", icon: "info" },
                 { num: 3, name: "Фізика", time: "09:55 - 10:40", dbTitle: "ГДЗ Фізика", image: "assets/books/physics.jpg" },
                 { num: 4, name: "Англійська мова", time: "10:50 - 11:35", dbTitle: "ГДЗ Англійська мова", image: "assets/books/english.jpg" },
@@ -2790,8 +3329,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return (
             name === 'технології' ||
             name === 'інформатика' ||
+            name === 'фізкультура' ||
             name.includes('технологі') ||
             name.includes('інформатик') ||
+            name.includes('фізкультур') ||
             name.includes('фізичн') ||
             name.includes('мистецтв')
         );
@@ -3012,7 +3553,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let footerHtml = '';
             if (isNoBook) {
-                footerHtml = `<span class="lesson-no-book-badge">Без підручника</span>`;
+                footerHtml = `<span class="lesson-no-book-badge"><svg class="no-book-svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="2" y1="2" x2="22" y2="22"/></svg>Без підручника</span>`;
             } else if (isDual) {
                 const dualConf = DUAL_SUBJECTS_MAP[lesson.name];
                 if (dualConf && dualConf.options) {
@@ -3060,6 +3601,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Card body click opens split modal
                 card.addEventListener('click', (e) => {
+                    if (card._isCardScrolling) {
+                        card._isCardScrolling = false;
+                        return;
+                    }
                     openSplitSubjectModal(lesson, card);
                 });
             }
@@ -3079,14 +3624,28 @@ document.addEventListener('DOMContentLoaded', () => {
     if (avatarBtn && bgAudio) {
         avatarBtn.addEventListener('click', () => {
             if (bgAudio.paused) {
-                bgAudio.play().then(() => avatarBtn.classList.add('is-playing')).catch(() => {});
+                avatarBtn.classList.add('is-playing');
+                document.body.classList.add('audio-playing');
+                const playPromise = bgAudio.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch((err) => {
+                        console.log('Audio autoplay prevented or file loading:', err);
+                    });
+                }
             } else {
                 bgAudio.pause();
                 avatarBtn.classList.remove('is-playing');
+                document.body.classList.remove('audio-playing');
             }
         });
-        bgAudio.addEventListener('ended', () => avatarBtn.classList.remove('is-playing'));
-        bgAudio.addEventListener('pause', () => avatarBtn.classList.remove('is-playing'));
+        bgAudio.addEventListener('ended', () => {
+            avatarBtn.classList.remove('is-playing');
+            document.body.classList.remove('audio-playing');
+        });
+        bgAudio.addEventListener('pause', () => {
+            avatarBtn.classList.remove('is-playing');
+            document.body.classList.remove('audio-playing');
+        });
     }
 
     // ==========================================================================
@@ -3149,14 +3708,22 @@ document.addEventListener('DOMContentLoaded', () => {
             settingBlurSlider.value = window.settingsState.motionBlurStrength;
         }
         if (blurLevelBadge) {
-            blurLevelBadge.textContent = isQuality
-                ? `${window.settingsState.motionBlurStrength.toFixed(1)}px`
-                : '🔒 Заблоковано';
+            if (!isQuality) {
+                blurLevelBadge.textContent = '🔒 Заблоковано';
+            } else if (window.settingsState.motionBlurStrength === 0) {
+                blurLevelBadge.textContent = 'Вимкнено';
+            } else {
+                blurLevelBadge.textContent = `${window.settingsState.motionBlurStrength.toFixed(1)}px`;
+            }
         }
         if (blurLevelDesc) {
-            blurLevelDesc.textContent = isQuality
-                ? 'Інтенсивність кінематографічного розмиття при русі вікон'
-                : 'Доступно лише в пресеті «Якість» (для максимальної плавності)';
+            if (!isQuality) {
+                blurLevelDesc.textContent = 'Доступно лише в пресеті «Якість» (для максимальної плавності)';
+            } else if (window.settingsState.motionBlurStrength === 0) {
+                blurLevelDesc.textContent = 'Розмиття при русі вікон повністю вимкнено';
+            } else {
+                blurLevelDesc.textContent = 'Інтенсивність розмиття при швидкому русі вікон';
+            }
         }
         if (blurStepMarks) {
             blurStepMarks.forEach(mark => {
@@ -3184,6 +3751,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const auraCfg = getAuraConfig(window.settingsState);
         document.documentElement.style.setProperty('--purple-accent', accentCfg.accent);
         document.documentElement.style.setProperty('--purple-glow', accentCfg.glow);
+        document.documentElement.style.setProperty('--accent-contrast-text', accentCfg.contrast);
         document.documentElement.style.setProperty('--aura-glow-1', auraCfg.glow1);
         document.documentElement.style.setProperty('--aura-glow-2', auraCfg.glow2);
         document.documentElement.style.setProperty('--hero-reflection-color', auraCfg.reflection);
@@ -3216,6 +3784,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // 8. Sound FX
         const settingSoundFx = document.getElementById('settingSoundFx');
         if (settingSoundFx) settingSoundFx.checked = window.settingsState.soundFx !== false;
+
+        // 8b. Fast Card Switch
+        const settingFastSwitch = document.getElementById('settingFastSwitch');
+        if (settingFastSwitch) settingFastSwitch.checked = !!window.settingsState.fastSwitch;
 
         // 9. Aura Style
         const settingAuraStyle = document.getElementById('settingAuraStyle');
@@ -3261,11 +3833,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function closeSettingsModal() {
-        if (!settingsModalBackdrop) return;
+        if (!settingsModalBackdrop || !settingsModalBackdrop.classList.contains('is-open')) return;
         playTapticAudio('close');
-        settingsModalBackdrop.classList.remove('is-open');
-        settingsModalBackdrop.setAttribute('aria-hidden', 'true');
-        window.lenis?.start();
+        settingsModalBackdrop.classList.add('is-closing');
+        setTimeout(() => {
+            settingsModalBackdrop.classList.remove('is-open', 'is-closing');
+            settingsModalBackdrop.setAttribute('aria-hidden', 'true');
+            window.lenis?.start();
+        }, 240);
     }
 
     if (settingsBtn) {
@@ -3294,7 +3869,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function setMotionBlurStrength(val) {
         if (window.settingsState.perfLevel !== 0) return; // Unlocked only in Quality mode
-        val = Math.max(1, Math.min(7, parseFloat(val) || 3.0));
+        val = Math.max(0, Math.min(7, parseFloat(val) || 0));
         window.settingsState.motionBlurStrength = val;
         applySettings();
         if (window.settingsState.hapticMode && 'vibrate' in navigator) {
@@ -3359,6 +3934,15 @@ document.addEventListener('DOMContentLoaded', () => {
             window.settingsState.timerDisplay = e.target.checked;
             playTapticAudio('click');
             applySettings();
+        });
+    }
+
+    const settingFastSwitch = document.getElementById('settingFastSwitch');
+    if (settingFastSwitch) {
+        settingFastSwitch.addEventListener('change', (e) => {
+            window.settingsState.fastSwitch = e.target.checked;
+            playTapticAudio('click');
+            persistSettings();
         });
     }
 
@@ -3427,4 +4011,7 @@ document.addEventListener('DOMContentLoaded', () => {
             playTapticAudio('click');
         });
     }
+
+    window.WEEK_SCHEDULE = WEEK_SCHEDULE;
+    window.SUBJECTS_DB = SUBJECTS_DB;
 });

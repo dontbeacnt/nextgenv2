@@ -2,9 +2,15 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#0d0d11">
-    <title>NextGen Liquid Glass</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="NextGen">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="apple-touch-icon" href="assets/avatar.png">
+    <title>NextGen</title>
     <!-- SF Pro Display Font with Cyrillic and Latin support -->
     <link rel="preconnect" href="https://fonts.cdnfonts.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.cdnfonts.com/css/sf-pro-display">
@@ -15,7 +21,7 @@
 </head>
 <body>
     <!-- Background Audio Element -->
-    <audio id="bgAudio" src="assets/чечня.mp3" preload="none"></audio>
+    <audio id="bgAudio" src="assets/чечня.mp3" preload="auto"></audio>
 
     <div class="app-container" id="appContainer">
         <!-- Top Header Navigation -->
@@ -42,9 +48,6 @@
                     </button>
                     <button type="button" class="nav-tab" data-tab="ai">
                         <span class="tab-text">ИИ</span>
-                    </button>
-                    <button type="button" class="nav-tab" data-tab="forum">
-                        <span class="tab-text">ФОРУМ</span>
                     </button>
                     <button type="button" class="nav-tab" data-tab="alarm">
                         <span class="tab-text">ТРИВОГА</span>
@@ -295,7 +298,7 @@
                     <span class="lesson-time-badge" id="modalLaunchLessonTime"></span>
                 </div>
                 <div class="card-cover-box" id="modalLaunchCoverBox" style="display: none;">
-                    <img src="" class="card-cover-img" id="modalLaunchCoverImg" alt="" />
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E" class="card-cover-img" id="modalLaunchCoverImg" alt="" />
                 </div>
                 <div class="card-icon-box" id="modalLaunchIconBox" style="display: none;">
                     <div class="card-icon-placeholder" id="modalLaunchIconPlaceholder"></div>
@@ -340,7 +343,7 @@
                 <div class="modal-preview-column">
                     <a href="#" target="_blank" rel="noopener" class="book-preview-card" id="modalBookPreviewLink" title="Натисніть, щоб відкрити підручник">
                         <div class="book-preview-inner-space" id="modalBookInnerSpace">
-                            <img class="book-preview-cover" id="modalBookCoverImg" src="" alt="Обкладинка підручника" />
+                            <img class="book-preview-cover" id="modalBookCoverImg" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E" alt="Обкладинка підручника" />
                             <div class="book-preview-placeholder" id="modalBookPlaceholder">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                                     <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
@@ -353,6 +356,11 @@
                         </div>
                     </a>
                 </div>
+            </div>
+
+            <!-- iOS Home Bar Indicator & Interactive Gesture Handle -->
+            <div class="modal-home-bar-zone" id="modalHomeBarZone" role="button" aria-label="Проведіть або натисніть, щоб закрити">
+                <div class="modal-home-bar"></div>
             </div>
         </div>
     </div>
@@ -373,10 +381,10 @@
             <div class="calc-body">
                 <!-- Operation selector -->
                 <div class="calc-op-selector">
-                    <button type="button" class="calc-op-btn active" data-op="+" id="calcOpAdd">+</button>
-                    <button type="button" class="calc-op-btn" data-op="-" id="calcOpSub">−</button>
-                    <button type="button" class="calc-op-btn" data-op="*" id="calcOpMul">×</button>
-                    <button type="button" class="calc-op-btn" data-op="/" id="calcOpDiv">÷</button>
+                    <button type="button" class="calc-op-btn active" data-op="+" id="calcOpAdd" aria-label="Додавання">+</button>
+                    <button type="button" class="calc-op-btn" data-op="-" id="calcOpSub" aria-label="Віднімання">−</button>
+                    <button type="button" class="calc-op-btn" data-op="*" id="calcOpMul" aria-label="Множення">×</button>
+                    <button type="button" class="calc-op-btn" data-op="/" id="calcOpDiv" aria-label="Ділення">÷</button>
                 </div>
 
                 <!-- Input fields -->
@@ -399,14 +407,14 @@
             <!-- Modal Header with segmented control and close button -->
             <div class="schedule-modal-header">
                 <div class="schedule-segmented-control" role="tablist">
-                    <button type="button" class="seg-btn active" id="segBtnBells" data-view="bells" role="tab" aria-selected="true">
+                    <button type="button" class="seg-btn active" id="segBtnBells" data-view="bells" role="tab" aria-selected="true" aria-label="Час уроків та перерв">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="seg-icon">
                             <circle cx="12" cy="12" r="10"></circle>
                             <polyline points="12 6 12 12 16 14"></polyline>
                         </svg>
                         <span>Час уроків та перерв</span>
                     </button>
-                    <button type="button" class="seg-btn" id="segBtnLessons" data-view="lessons" role="tab" aria-selected="false">
+                    <button type="button" class="seg-btn" id="segBtnLessons" data-view="lessons" role="tab" aria-selected="false" aria-label="Які предмети">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="seg-icon">
                             <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
                             <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
@@ -558,11 +566,12 @@
                                     <span class="setting-label">Сила Motion Blur</span>
                                     <span class="perf-level-badge blur-badge" id="blurLevelBadge">3.0px</span>
                                 </div>
-                                <div class="setting-desc" id="blurLevelDesc">Інтенсивність кінематографічного розмиття при русі вікон</div>
+                                <div class="setting-desc" id="blurLevelDesc">Інтенсивність розмиття при русі вікон</div>
                             </div>
                             <div class="ios-slider-container">
-                                <input type="range" min="1" max="7" step="0.5" value="3" id="settingBlurSlider" class="perf-range-input blur-range-input" aria-label="Сила моушен блюра" />
+                                <input type="range" min="0" max="7" step="0.5" value="3" id="settingBlurSlider" class="perf-range-input blur-range-input" aria-label="Сила моушен блюра" />
                                 <div class="slider-step-marks blur-step-marks">
+                                    <span class="step-mark" data-blur="0">Вимк</span>
                                     <span class="step-mark" data-blur="1.5">Слабкий</span>
                                     <span class="step-mark active" data-blur="3">Стандартний</span>
                                     <span class="step-mark" data-blur="5.5">Максимальний</span>
@@ -592,17 +601,28 @@
                             </label>
                         </div>
 
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <div class="setting-label">Швидке перемикання карток</div>
+                                <div class="setting-desc">Відкривати інший предмет одразу при кліку. Якщо вимкнено — будь-який клік просто закриває поточне вікно</div>
+                            </div>
+                            <label class="ios-switch">
+                                <input type="checkbox" id="settingFastSwitch" />
+                                <span class="ios-slider"></span>
+                            </label>
+                        </div>
+
                         <!-- Animation Dynamics & Speed Preset -->
                         <div class="setting-row setting-ai-row">
                             <div class="setting-info">
                                 <div class="setting-label">Динаміка та швидкість анімацій</div>
-                                <div class="setting-desc" id="animPresetDesc">«Кінематограф Apple»: збалансована пружина з м'яким розквітом</div>
+                                <div class="setting-desc" id="animPresetDesc">Bounce: збалансована пружна анімація</div>
                             </div>
                             <div class="ios-select-wrap">
                                 <select id="settingAnimPreset" class="ios-ai-select" aria-label="Обрати пресет анімацій">
                                     <option value="cinematic">Bounce</option>
                                     <option value="fast">Flash</option>
-                                    <option value="liquid">Bounce</option>
+                                    <option value="liquid">Bounce 2</option>
                                     <option value="slow">Sweet</option>
                                     <option value="instant">Flash 2</option>
                                 </select>
@@ -652,13 +672,12 @@
                         <div class="setting-row setting-ai-row">
                             <div class="setting-info">
                                 <div class="setting-label">Атмосферне сяйво фону</div>
-                                <div class="setting-desc" id="auraStyleDesc">✨ Синхронно з акцентом: колір фону змінюється разом із темою</div>
+                                <div class="setting-desc" id="auraStyleDesc">Сяйво змінюється разом із вибраним акцентом</div>
                             </div>
                             <div class="ios-select-wrap">
                                 <select id="settingAuraStyle" class="ios-ai-select" aria-label="Обрати стиль сяйва фону">
-                                    <option value="dynamic">✨ Синхронно з акцентом</option>
-                                    <option value="aurora">🌿 «Північна Аврора» (Смарагд)</option>
-                                    <option value="oled">🖤 «Глибокий онікс» (Pure OLED)</option>
+                                    <option value="dynamic">В колір теми</option>
+                                    <option value="oled">Без сяйва (OLED)</option>
                                 </select>
                             </div>
                         </div>
